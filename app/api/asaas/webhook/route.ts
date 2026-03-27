@@ -1,69 +1,92 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl) {
+  throw new Error('NEXT_PUBLIC_SUPABASE_URL não configurado.');
+}
+
+if (!supabaseServiceRoleKey) {
+  throw new Error('SUPABASE_SERVICE_ROLE_KEY não configurado.');
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-
-    console.log('WEBHOOK ASAAS:', body);
-
-    const event = body.event;
-    const payment = body.payment;
-
     const webhookToken = req.headers.get('asaas-access-token');
 
-if (!process.env.ASAAS_WEBHOOK_TOKEN) {
-  return NextResponse.json(
-    { error: 'ASAAS_WEBHOOK_TOKEN não configurado.' },
-    { status: 500 }
-  );
-}
+    if (!process.env.ASAAS_WEBHOOK_TOKEN) {
+      return NextResponse.json(
+        { error: 'ASAAS_WEBHOOK_TOKEN não configurado.' },
+        { status: 500 }
+      );
+    }
 
-if (webhookToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
-  return NextResponse.json(
-    { error: 'Token de webhook inválido.' },
-    { status: 401 }
-  );
-}
+    if (webhookToken !== process.env.ASAAS_WEBHOOK_TOKEN) {
+      return NextResponse.json(
+        { error: 'Token de webhook inválido.' },
+        { status: 401 }
+      );
+    }
 
-    if (!payment) {
+    const body = await req.json();
+
+    console.log('WEBHOOK ASAAS BODY:', JSON.stringify(body, null, 2));
+
+    const event = body?.event;
+    const payment = body?.payment;
+    const orderId = payment?.externalReference;
+
+    console.log('WEBHOOK ASAAS EVENT:', event);
+    console.log('WEBHOOK ASAAS ORDER ID:', orderId);
+    console.log('WEBHOOK ASAAS PAYMENT ID:', payment?.id);
+
+    if (!payment || !orderId) {
       return NextResponse.json({ ok: true });
     }
 
-    const orderId = payment.externalReference;
+    let nextStatus: string | null = null;
 
-    if (!orderId) {
-      return NextResponse.json({ ok: true });
-    }
-
-    // 🔥 PAGAMENTO CONFIRMADO
     if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-      await supabase
-        .from('orders')
-        .update({
-          status: 'approved',
-        })
-        .eq('id', orderId);
+      nextStatus = 'paid';
     }
 
-    // ❌ PAGAMENTO FALHOU
     if (event === 'PAYMENT_OVERDUE' || event === 'PAYMENT_DELETED') {
-      await supabase
-        .from('orders')
-        .update({
-          status: 'failed',
-        })
-        .eq('id', orderId);
+      nextStatus = 'failed';
     }
 
-    return NextResponse.json({ success: true });
+    if (!nextStatus) {
+      return NextResponse.json({ ok: true });
+    }
+
+    const { data, error } = await supabase
+      .from('orders')
+      .update({
+        status: nextStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', orderId)
+      .select();
+
+    if (error) {
+      console.error('SUPABASE UPDATE ERROR:', error);
+      return NextResponse.json(
+        { error: 'Erro ao atualizar pedido no banco.' },
+        { status: 500 }
+      );
+    }
+
+    console.log('SUPABASE UPDATE SUCCESS:', data);
+
+    return NextResponse.json({ success: true, status: nextStatus });
   } catch (error) {
     console.error('WEBHOOK ERROR:', error);
-    return NextResponse.json({ error: 'Erro no webhook' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erro no webhook.' },
+      { status: 500 }
+    );
   }
 }
