@@ -1,5 +1,9 @@
 // TESTE GIT
 
+export async function GET() {
+  return new Response('WEBHOOK OK');
+}
+
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
