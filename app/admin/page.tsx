@@ -3,25 +3,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
-function useAdminAuth() {
-  const [authorized, setAuthorized] = useState(false);
-
-  useEffect(() => {
-    const password = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
-
-    const input = prompt('Digite a senha do admin:');
-
-    if (input === password) {
-      setAuthorized(true);
-    } else {
-      alert('Senha incorreta');
-      window.location.href = '/';
-    }
-  }, []);
-
-  return authorized;
-}
-
 type Order = {
   id: string;
   customer_name: string | null;
@@ -110,14 +91,39 @@ function normalizePaymentMethod(value: string | null): PaymentFilter | 'other' {
 }
 
 export default function AdminPage() {
-  const authorized = useAdminAuth();
-  if (!authorized) {
-  return (
-    <div className="min-h-screen flex items-center justify-center text-white">
-      Verificando acesso...
-    </div>
-  );
-}
+
+  const [loadingAuth, setLoadingAuth] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    async function checkAdmin() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.user) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_admin')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profile?.is_admin) {
+        window.location.href = '/';
+        return;
+      }
+
+      setIsAdmin(true);
+      setLoadingAuth(false);
+    }
+
+    checkAdmin();
+  }, []);
+  
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
