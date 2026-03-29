@@ -3,6 +3,25 @@
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+function useAdminAuth() {
+  const [authorized, setAuthorized] = useState(false);
+
+  useEffect(() => {
+    const password = process.env.NEXT_PUBLIC_ADMIN_PASSWORD;
+
+    const input = prompt('Digite a senha do admin:');
+
+    if (input === password) {
+      setAuthorized(true);
+    } else {
+      alert('Senha incorreta');
+      window.location.href = '/';
+    }
+  }, []);
+
+  return authorized;
+}
+
 type Order = {
   id: string;
   customer_name: string | null;
@@ -91,6 +110,14 @@ function normalizePaymentMethod(value: string | null): PaymentFilter | 'other' {
 }
 
 export default function AdminPage() {
+  const authorized = useAdminAuth();
+  if (!authorized) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-white">
+      Verificando acesso...
+    </div>
+  );
+}
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
