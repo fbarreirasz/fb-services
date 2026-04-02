@@ -188,6 +188,30 @@ type RcPaymentForm = {
   transferProof: File | null;
 };
 
+function validarCPF(cpf: string): boolean {
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+  let soma = 0;
+  for (let i = 0; i < 9; i++) soma += parseInt(cpf[i]) * (10 - i);
+  let resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  if (resto !== parseInt(cpf[9])) return false;
+  soma = 0;
+  for (let i = 0; i < 10; i++) soma += parseInt(cpf[i]) * (11 - i);
+  resto = (soma * 10) % 11;
+  if (resto === 10 || resto === 11) resto = 0;
+  return resto === parseInt(cpf[10]);
+}
+
+function validarCNPJ(cnpj: string): boolean {
+  if (/^(\d)\1{13}$/.test(cnpj)) return false;
+  const calc = (c: string, arr: number[]) =>
+    arr.reduce((sum, v, i) => sum + parseInt(c[i]) * v, 0);
+  const mod = (n: number) => { const r = n % 11; return r < 2 ? 0 : 11 - r; };
+  const d1 = mod(calc(cnpj, [5,4,3,2,9,8,7,6,5,4,3,2]));
+  const d2 = mod(calc(cnpj, [6,5,4,3,2,9,8,7,6,5,4,3,2]));
+  return d1 === parseInt(cnpj[12]) && d2 === parseInt(cnpj[13]);
+}
+
 function formatCurrencyBRL(value: number) {
   return value.toLocaleString('pt-BR', {
     style: 'currency',
@@ -1278,10 +1302,14 @@ setHasPurchasedService(false);
       errors.phone = 'Digite um telefone válido com DDD.';
     }
 
-    if (!cpfCnpj) {
+        if (!cpfCnpj) {
   errors.cpfCnpj = 'Informe o CPF ou CNPJ.';
 } else if (cpfCnpj.length !== 11 && cpfCnpj.length !== 14) {
   errors.cpfCnpj = 'Digite um CPF ou CNPJ válido.';
+} else if (cpfCnpj.length === 11 && !validarCPF(cpfCnpj)) {
+  errors.cpfCnpj = 'CPF inválido. Verifique os números digitados.';
+} else if (cpfCnpj.length === 14 && !validarCNPJ(cpfCnpj)) {
+  errors.cpfCnpj = 'CNPJ inválido. Verifique os números digitados.';
 }
 
     if (!charName) {
