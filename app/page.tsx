@@ -116,6 +116,7 @@ const sundayHours = ['21:00', '22:00', '23:00'];
 
 // TESTE TEMPORÁRIO — remover antes de produção
 const reservedHoursByDate: Record<string, string[]> = {
+  '2026-04-03': ['23:00', '00:00'],
   '2026-04-06': ['23:00', '00:00'],
   '2026-04-08': ['23:00', '00:00'],
   '2026-04-10': ['23:00', '00:00'],
