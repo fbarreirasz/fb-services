@@ -357,6 +357,16 @@ export default function AdminPage() {
     );
   }
 
+  if (loadingAuth) {
+  return (
+    <div className="min-h-screen flex items-center justify-center text-white">
+      Verificando acesso...
+    </div>
+  );
+}
+
+if (!isAdmin) return null;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#050014] via-[#0a0225] to-[#020617] p-6 text-white">
       <div className="mx-auto max-w-7xl">

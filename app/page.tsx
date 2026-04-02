@@ -115,19 +115,7 @@ const saturdayHours = ['21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const sundayHours = ['21:00', '22:00', '23:00'];
 
 // TESTE TEMPORÁRIO — remover antes de produção
-const reservedHoursByDate: Record<string, string[]> = {
-  '2026-03-21': ['21:00', '22:00'],
-  '2026-03-22': ['21:00'],
-  '2026-03-23': ['19:00', '20:00'],
-  '2026-03-24': [],
-  '2026-03-25': ['19:00', '20:00'],
-  '2026-03-26': [],
-  '2026-03-27': ['19:00', '20:00', '21:00'],
-  '2026-03-28': ['21:00', '22:00', '23:00'],
-  '2026-03-29': [],
-  '2026-03-30': ['19:00', '20:00', '21:00'],
-  '2026-03-31': ['20:00', '21:00'],
-};
+const reservedHoursByDate: Record<string, string[]> = {};
 
 const bossOptions = [
   'Court Warlock',
@@ -488,7 +476,7 @@ function getQuestPrice(quest: string) {
 }
 
 type ServiceRecord = {
-  id: number;
+  id: number | string;
   type: string;
   character: string;
   date: string;
@@ -552,14 +540,15 @@ export default function Page() {
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [activePage, setActivePage] = useState<ActivePage>('home');
   const [menuOpen, setMenuOpen] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState(2);
-  const currentYear = 2026;
+  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
+const currentYear = new Date().getFullYear();
   const customerStepTopRef = useRef<HTMLDivElement | null>(null);
   const [openCustomerDropdown, setOpenCustomerDropdown] = useState<
     'vocation' | 'world' | null
   >(null);
 
   const [rcNicknameCopied, setRcNicknameCopied] = useState(false);
+  const [paymentSuccessMessage, setPaymentSuccessMessage] = useState('');
   function handleCopyRcNickname() {
     navigator.clipboard.writeText('Barreira Services Bank');
     setRcNicknameCopied(true);
@@ -575,6 +564,58 @@ export default function Page() {
 
   const [rcRatePer1000, setRcRatePer1000] = useState(DEFAULT_RC_RATE_PER_1000);
 const [rcBlockSize, setRcBlockSize] = useState(DEFAULT_RC_BLOCK_SIZE);
+
+
+async function loadFeedbacks() {
+  const { data, error } = await supabase
+    .from('feedbacks').select('*').order('created_at', { ascending: false });
+  if (error) { console.error('Erro ao buscar feedbacks:', error); return; }
+  if (data) {
+    setFeedbacks(data.map((item: any) => ({
+      id: item.id,
+      service: item.service,
+      character: item.character,
+      rating: item.rating,
+      comment: item.comment,
+      date: new Date(item.created_at).toLocaleDateString('pt-BR'),
+      verified: item.verified,
+      author: item.author,
+    })));
+  }
+}
+
+async function loadUserOrders(userId: string) {
+  const { data, error } = await supabase
+    .from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false });
+  if (error) { console.error('Erro ao buscar pedidos:', error); return; }
+  if (data) {
+    const history: ServiceRecord[] = data.map((order: any) => ({
+      id: order.id,
+      type: order.service_type,
+      character: order.char_name,
+      date: new Date(order.created_at).toLocaleDateString('pt-BR'),
+      hours: '-',
+      total: `R$ ${Number(order.total_brl).toFixed(2).replace('.', ',')}`,
+      status: order.status,
+    }));
+    setServiceHistory(history);
+    const active = data.find((o: any) => o.status === 'pending' || o.status === 'approved');
+    if (active) {
+      setCurrentService({
+        type: active.service_type,
+        character: active.char_name,
+        date: new Date(active.created_at).toLocaleDateString('pt-BR'),
+        hours: '-',
+        total: `R$ ${Number(active.total_brl).toFixed(2).replace('.', ',')}`,
+        status: active.status,
+      });
+      setHasPurchasedService(true);
+    } else {
+      setCurrentService(null);
+      setHasPurchasedService(false);
+    }
+  }
+}
 
 async function loadSiteSettings() {
   const { data, error } = await supabase
@@ -597,6 +638,18 @@ async function loadSiteSettings() {
 
 useEffect(() => {
   loadSiteSettings();
+  loadFeedbacks();
+}, []);
+
+useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('payment') === 'success') {
+    const orderId = params.get('orderId');
+    setPaymentSuccessMessage(
+      `Pagamento confirmado!${orderId ? ` Pedido #${orderId.slice(0, 8).toUpperCase()}` : ''}`
+    );
+    window.history.replaceState({}, '', '/');
+  }
 }, []);
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
@@ -838,6 +891,7 @@ setAsaasInvoiceUrl('');
 
       if (currentSession?.user) {
         ensureProfile(currentSession.user);
+        loadUserOrders(currentSession.user.id);
       }
 
       const fullName =
@@ -859,6 +913,7 @@ setAsaasInvoiceUrl('');
 
       if (newSession?.user) {
         ensureProfile(newSession.user);
+        loadUserOrders(newSession.user.id);
       }
 
       const fullName =
@@ -888,6 +943,9 @@ setAsaasInvoiceUrl('');
 
     setSession(null);
     setIsLoggedIn(false);
+    setServiceHistory([]);
+setCurrentService(null);
+setHasPurchasedService(false);
     setIsUserMenuOpen(false);
     setUserName('');
     setUserEmail('');
@@ -990,6 +1048,7 @@ setAsaasInvoiceUrl('');
         setIsLoggedIn(true);
         setUserEmail(data.session.user.email ?? '');
         await ensureProfile(data.session.user);
+        await loadUserOrders(data.session.user.id);
 
         const fullName =
           data.session.user.user_metadata?.full_name ||
@@ -1330,73 +1389,43 @@ setAsaasInvoiceUrl('');
     return blockedTerms.find((term) => normalized.includes(term)) || null;
   }
 
-  function handleSubmitFeedback() {
-    setFeedbackError('');
-    setFeedbackSuccess('');
+  async function handleSubmitFeedback() {
+  setFeedbackError(''); setFeedbackSuccess('');
+  if (!isLoggedIn) { setFeedbackError('Faça login para publicar sua avaliação.'); return; }
+  if (!hasRecentEligibleService()) { setFeedbackError('É necessário ter um service nos últimos 7 dias.'); return; }
+  if (!feedbackService.trim()) { setFeedbackError('Selecione o tipo de service avaliado.'); return; }
+  if (!feedbackCharacter.trim()) { setFeedbackError('Informe o nome do personagem atendido.'); return; }
+  if (feedbackRating < 1 || feedbackRating > 5) { setFeedbackError('Selecione de 1 a 5 estrelas.'); return; }
+  if (feedbackComment.trim().length < 12) { setFeedbackError('Escreva um comentário com pelo menos 12 caracteres.'); return; }
+  const blockedWord = containsBlockedLanguage(feedbackComment);
+  if (blockedWord) { setFeedbackError(`Linguagem ofensiva detectada ("${blockedWord}").`); return; }
 
-    if (!isLoggedIn) {
-      setFeedbackError('Faça login para publicar sua avaliação.');
-      return;
-    }
+  const { data, error } = await supabase.from('feedbacks').insert([{
+    user_id: session?.user?.id,
+    author: userName || 'Cliente',
+    service: feedbackService,
+    character: feedbackCharacter,
+    rating: feedbackRating,
+    comment: feedbackComment.trim(),
+    verified: true,
+  }]).select().single();
 
-    if (!hasRecentEligibleService()) {
-      setFeedbackError(
-        'Para publicar uma avaliação, é necessário ter contratado ou concluído um service nos últimos 7 dias.'
-      );
-      return;
-    }
+  if (error) { setFeedbackError(`Erro ao publicar: ${error.message}`); return; }
 
-    if (!feedbackService.trim()) {
-      setFeedbackError('Selecione o tipo de service avaliado.');
-      return;
-    }
-
-    if (!feedbackCharacter.trim()) {
-      setFeedbackError('Informe o nome do personagem atendido.');
-      return;
-    }
-
-    if (feedbackRating < 1 || feedbackRating > 5) {
-      setFeedbackError('Selecione de 1 a 5 estrelas para avaliar.');
-      return;
-    }
-
-    if (feedbackComment.trim().length < 12) {
-      setFeedbackError('Escreva um comentário com pelo menos 12 caracteres.');
-      return;
-    }
-
-    const blockedWord = containsBlockedLanguage(feedbackComment);
-
-    if (blockedWord) {
-      setFeedbackError(
-        `Não foi possível publicar sua avaliação. Encontramos linguagem ofensiva ou desrespeitosa no texto ("${blockedWord}"). Críticas são bem-vindas, mas escreva com respeito para sua avaliação ser publicada.`
-      );
-      return;
-    }
-
-    const today = new Date();
-    const formattedDate = today.toLocaleDateString('pt-BR');
-
-    const newFeedback: FeedbackItem = {
-      id: Date.now(),
-      service: feedbackService,
-      character: feedbackCharacter,
-      rating: feedbackRating,
-      comment: feedbackComment.trim(),
-      date: formattedDate,
-      verified: true,
-      author: userName || 'Cliente',
-    };
-
-    setFeedbacks((prev) => [newFeedback, ...prev]);
-    setFeedbackRating(0);
-    setFeedbackComment('');
-    setFeedbackCharacter('');
-    setFeedbackService('Char Level Up');
-    setFeedbackSuccess('Avaliação publicada com sucesso.');
+  if (data) {
+    setFeedbacks((prev) => [{
+      id: data.id, service: data.service, character: data.character,
+      rating: data.rating, comment: data.comment,
+      date: new Date(data.created_at).toLocaleDateString('pt-BR'),
+      verified: data.verified, author: data.author,
+    }, ...prev]);
   }
 
+  setFeedbackRating(0); setFeedbackComment(''); setFeedbackCharacter('');
+  setFeedbackService('Char Level Up'); setFeedbackSuccess('Avaliação publicada com sucesso.');
+}
+
+ 
   function goToPage(page: ActivePage) {
     setMenuOpen(false);
     setSelectedService(null);
@@ -2163,6 +2192,17 @@ const whatsappRcServiceMessage = encodeURIComponent(
       <div className="pointer-events-none absolute right-[-6%] top-[8%] z-0 h-[24rem] w-[24rem] rounded-full bg-fuchsia-600/10 blur-3xl" />
       <div className="pointer-events-none absolute left-1/2 bottom-[-8%] z-0 h-[18rem] w-[40rem] -translate-x-1/2 rounded-full bg-orange-500/12 blur-3xl" />
       <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.05),transparent_22%),linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent_18%,transparent_82%,rgba(0,0,0,0.08))]" />
+
+{paymentSuccessMessage && (
+  <div className="fixed top-4 left-1/2 z-[100] -translate-x-1/2 flex items-center gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-500/20 px-5 py-3 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-md">
+    <CheckCircle2 className="h-4 w-4 text-emerald-300" />
+    {paymentSuccessMessage}
+    <button type="button" onClick={() => setPaymentSuccessMessage('')} className="ml-2 text-emerald-300 hover:text-white">
+      <X className="h-4 w-4" />
+    </button>
+  </div>
+)}
+
 
       <AnimatePresence>
         {selectedService && activePage === 'home' && (
