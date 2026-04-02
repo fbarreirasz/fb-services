@@ -116,7 +116,6 @@ const sundayHours = ['21:00', '22:00', '23:00'];
 
 // TESTE TEMPORÁRIO — remover antes de produção
 const reservedHoursByDate: Record<string, string[]> = {};
-
 const bossOptions = [
   'Court Warlock',
   'Despor',
@@ -311,23 +310,22 @@ function isPastDate(date: Date) {
   return test < today;
 }
 
-function isSoldOut(_date: Date) {
-  return false;
+function isSoldOut(date: Date) {
+  const dateKey = formatDateKey(date);
+  const available = getAvailableHoursForDate(dateKey);
+  const reserved = reservedHoursByDate[dateKey] ?? [];
+  if (available.length === 0) return false;
+  return reserved.length >= available.length;
 }
 
 function isPartial(date: Date) {
-  const limitDate = new Date(2026, 4, 31);
-  const compareDate = new Date(
-    date.getFullYear(),
-    date.getMonth(),
-    date.getDate()
-  );
-
-  if (compareDate > limitDate) return false;
-  if (isSunday(date) || isSaturday(date)) return false;
+  
   if (isPastDate(date)) return false;
-
-  return true;
+  const dateKey = formatDateKey(date);
+  const available = getAvailableHoursForDate(dateKey);
+  const reserved = reservedHoursByDate[dateKey] ?? [];
+  if (available.length === 0 || reserved.length === 0) return false;
+  return reserved.length < available.length;
 }
 
 function getAvailableHoursForDate(dateKey: string | null) {
