@@ -2188,10 +2188,43 @@ const whatsappRcServiceMessage = encodeURIComponent(
           'radial-gradient(circle at 50% 14%, rgba(205,215,255,0.14) 0%, transparent 18%), radial-gradient(circle at 52% 18%, rgba(168,140,255,0.30) 0%, rgba(168,140,255,0.12) 14%, transparent 30%), radial-gradient(circle at 62% 24%, rgba(255,85,205,0.18) 0%, transparent 16%), radial-gradient(circle at 18% 28%, rgba(45,110,255,0.16) 0%, transparent 22%), radial-gradient(circle at 84% 34%, rgba(120,130,255,0.10) 0%, transparent 14%), radial-gradient(circle at 50% 100%, rgba(255,104,24,0.30) 0%, rgba(255,104,24,0.10) 16%, transparent 30%), radial-gradient(circle at 62% 84%, rgba(255,180,40,0.16) 0%, transparent 18%), radial-gradient(circle at 28% 88%, rgba(255,70,30,0.10) 0%, transparent 18%), linear-gradient(to bottom, #09101f 0%, #050b17 42%, #040814 72%, #030611 100%)',
       }}
     >
-      <div className="pointer-events-none absolute left-[-8%] top-[10%] z-0 h-[22rem] w-[22rem] rounded-full bg-blue-700/10 blur-3xl" />
-      <div className="pointer-events-none absolute right-[-6%] top-[8%] z-0 h-[24rem] w-[24rem] rounded-full bg-fuchsia-600/10 blur-3xl" />
-      <div className="pointer-events-none absolute left-1/2 bottom-[-8%] z-0 h-[18rem] w-[40rem] -translate-x-1/2 rounded-full bg-orange-500/12 blur-3xl" />
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.05),transparent_22%),linear-gradient(to_bottom,rgba(255,255,255,0.02),transparent_18%,transparent_82%,rgba(0,0,0,0.08))]" />
+      {/* Orbs nebulosas animadas */}
+<div className="orb-1 pointer-events-none absolute left-[-10%] top-[8%] z-0 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-[80px]" />
+<div className="orb-2 pointer-events-none absolute right-[-8%] top-[5%] z-0 h-[30rem] w-[30rem] rounded-full bg-fuchsia-500/15 blur-[90px]" />
+<div className="orb-3 pointer-events-none absolute left-[20%] top-[40%] z-0 h-[20rem] w-[20rem] rounded-full bg-blue-600/12 blur-[70px]" />
+<div className="orb-4 pointer-events-none absolute right-[15%] bottom-[10%] z-0 h-[24rem] w-[24rem] rounded-full bg-indigo-500/14 blur-[80px]" />
+<div className="pointer-events-none absolute left-1/2 bottom-[-8%] z-0 h-[18rem] w-[40rem] -translate-x-1/2 rounded-full bg-orange-500/10 blur-3xl" />
+
+{/* Aurora horizontal */}
+<div className="aurora-1 pointer-events-none absolute left-0 top-[30%] z-0 h-[2px] w-full bg-gradient-to-r from-transparent via-violet-400/20 to-transparent blur-[6px]" />
+<div className="aurora-2 pointer-events-none absolute left-0 top-[60%] z-0 h-[2px] w-full bg-gradient-to-r from-transparent via-fuchsia-400/15 to-transparent blur-[6px]" />
+
+{/* Estrelas */}
+<div className="pointer-events-none absolute inset-0 z-0">
+  {[
+    { top: '8%',  left: '12%',  size: 'h-[2px] w-[2px]', dur: '2.4s', delay: '0s' },
+    { top: '15%', left: '78%',  size: 'h-[1px] w-[1px]', dur: '3.1s', delay: '0.5s' },
+    { top: '22%', left: '45%',  size: 'h-[2px] w-[2px]', dur: '2.8s', delay: '1.2s' },
+    { top: '35%', left: '88%',  size: 'h-[1px] w-[1px]', dur: '4.0s', delay: '0.3s' },
+    { top: '42%', left: '5%',   size: 'h-[2px] w-[2px]', dur: '3.5s', delay: '0.8s' },
+    { top: '55%', left: '62%',  size: 'h-[1px] w-[1px]', dur: '2.6s', delay: '1.5s' },
+    { top: '65%', left: '30%',  size: 'h-[2px] w-[2px]', dur: '3.8s', delay: '0.2s' },
+    { top: '72%', left: '91%',  size: 'h-[1px] w-[1px]', dur: '2.2s', delay: '1.0s' },
+    { top: '80%', left: '18%',  size: 'h-[2px] w-[2px]', dur: '4.2s', delay: '0.7s' },
+    { top: '88%', left: '55%',  size: 'h-[1px] w-[1px]', dur: '3.0s', delay: '1.8s' },
+    { top: '5%',  left: '55%',  size: 'h-[2px] w-[2px]', dur: '2.9s', delay: '0.4s' },
+    { top: '48%', left: '75%',  size: 'h-[1px] w-[1px]', dur: '3.6s', delay: '1.1s' },
+  ].map((s, i) => (
+    <div
+      key={i}
+      className={`star absolute ${s.size} rounded-full bg-white`}
+      style={{ top: s.top, left: s.left, '--dur': s.dur, animationDelay: s.delay } as React.CSSProperties}
+    />
+  ))}
+</div>
+
+{/* Overlay gradiente geral */}
+<div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.04),transparent_22%),linear-gradient(to_bottom,rgba(255,255,255,0.01),transparent_18%,transparent_82%,rgba(0,0,0,0.12))]" />
 
 {paymentSuccessMessage && (
   <div className="fixed top-4 left-1/2 z-[100] -translate-x-1/2 flex items-center gap-3 rounded-2xl border border-emerald-400/30 bg-emerald-500/20 px-5 py-3 text-sm font-semibold text-emerald-100 shadow-[0_8px_24px_rgba(0,0,0,0.3)] backdrop-blur-md">
@@ -2552,7 +2585,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                             initial={{
                               opacity: 0,
                               y: -10,
-                              filter: 'blur(8px)',
+                              filter: 'blur(3px)',
                               height: 0,
                             }}
                             animate={{
@@ -2564,10 +2597,10 @@ const whatsappRcServiceMessage = encodeURIComponent(
                             exit={{
                               opacity: 0,
                               y: -8,
-                              filter: 'blur(6px)',
+                              filter: 'blur(2px)',
                               height: 0,
                             }}
-                            transition={{ duration: 0.28, ease: 'easeOut' }}
+                            transition={{ duration: 0.2, ease: 'easeOut' }}
                             className="mt-2 overflow-hidden px-1"
                           >
                             <div className="rounded-[20px] bg-[#08101e]/88 px-3 py-3 shadow-[0_12px_30px_rgba(0,0,0,0.18)] backdrop-blur-md">
