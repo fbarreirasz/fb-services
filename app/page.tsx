@@ -148,10 +148,7 @@ const questOptions = [
   'Adventures of Galthen Quest',
   'Ferumbras Ascendant',
   'Grimvale Quest',
-  'Primal Ordeal',
-  'Rotten Blood',
-  'Soul War 50/50',
-  'Soul War Full',
+  'Bloody Tusks Quest',
   'Sweet Dreams Quest',
   'The Order of the Lion Quest',
   'The Roost of the Graveborn Quest',
@@ -319,7 +316,7 @@ function isSoldOut(date: Date) {
 }
 
 function isPartial(date: Date) {
-  
+
   if (isPastDate(date)) return false;
   const dateKey = formatDateKey(date);
   const available = getAvailableHoursForDate(dateKey);
