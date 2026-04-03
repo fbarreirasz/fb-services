@@ -2020,6 +2020,24 @@ const whatsappRcServiceMessage = encodeURIComponent(
     }
 
     setCurrentOrderId(createdOrder.id);
+    fetch('/api/email/notify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customerName: customerForm.fullName,
+        customerEmail: customerForm.email,
+        customerPhone: customerForm.phone,
+        charName: customerForm.charName,
+        charLevel: customerForm.charLevel,
+        vocation: customerForm.vocation,
+        world: customerForm.world,
+        serviceType: selectedServiceTitle,
+        paymentMethod: selectedPaymentMethod,
+        totalBrl: checkoutTotalValueNumber,
+        totalRc: selectedPaymentMethod === 'rubini' ? rubiniCoinsTotal : 0,
+        orderId: createdOrder.id,
+      }),
+    }).catch(console.error);
     setPixReadyForWhatsapp(false);
     setRcReadyForWhatsapp(false);
     setCardAcknowledged(false);
