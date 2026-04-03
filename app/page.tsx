@@ -111,6 +111,8 @@ const monthNames = [
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 const weekdayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
+const thursdayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
+const fridayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const saturdayHours = ['21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const sundayHours = ['21:00', '22:00', '23:00'];
 
@@ -367,9 +369,11 @@ function getAvailableHoursForDate(dateKey: string | null) {
 
   const [year, month, day] = dateKey.split('-').map(Number);
   const date = new Date(year, month - 1, day);
+  const dow = date.getDay();
 
-  if (isSunday(date)) return sundayHours;
-  if (isSaturday(date)) return saturdayHours;
+  if (dow === 0) return sundayHours;
+  if (dow === 6) return saturdayHours;
+  if (dow === 5) return fridayHours;
   return weekdayHours;
 }
 
