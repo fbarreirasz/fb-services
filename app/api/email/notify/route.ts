@@ -7,26 +7,48 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
-      customerName,
-      customerEmail,
-      customerPhone,
-      charName,
-      charLevel,
-      vocation,
-      world,
-      serviceType,
-      paymentMethod,
-      totalBrl,
-      totalRc,
-      orderId,
+      customerName, customerEmail, customerPhone,
+      charName, charLevel, vocation, world,
+      serviceType, paymentMethod, totalBrl, totalRc,
+      orderId, servicePayload,
     } = body;
 
     const paymentLabel =
-      paymentMethod === 'pix'
-        ? 'PIX'
-        : paymentMethod === 'card'
-        ? 'Cartão'
-        : `Rubini Coins (${totalRc} RC)`;
+      paymentMethod === 'pix' ? 'PIX'
+      : paymentMethod === 'card' ? 'Cartão'
+      : `Rubini Coins (${totalRc} RC)`;
+
+    // Monta bloco extra de detalhes pra boss/quest
+    let extraDetails = '';
+    if (serviceType?.includes('Boss') && servicePayload?.items?.length) {
+      extraDetails = `
+        <tr><td colspan="2" style="padding:20px 0 16px;font-size:16px;font-weight:700;color:#a78bfa;border-bottom:1px solid #1e2a3a;border-top:1px solid #1e2a3a;">👑 Bosses Selecionados</td></tr>
+        <tr><td colspan="2" style="padding:10px 0;color:#f1f5f9;">${servicePayload.items.join(', ')}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;">Preferência de dia</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.dayPreference || '-'}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;">Faixa de horário</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.timeWindow || '-'}</td></tr>
+        ${servicePayload.notes ? `<tr><td style="padding:10px 0;color:#94a3b8;">Observações</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.notes}</td></tr>` : ''}
+      `;
+    } else if (serviceType?.includes('Quest') && servicePayload?.items?.length) {
+      extraDetails = `
+        <tr><td colspan="2" style="padding:20px 0 16px;font-size:16px;font-weight:700;color:#a78bfa;border-bottom:1px solid #1e2a3a;border-top:1px solid #1e2a3a;">💎 Quests Selecionadas</td></tr>
+        <tr><td colspan="2" style="padding:10px 0;color:#f1f5f9;">${servicePayload.items.join(', ')}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;">Preferência de dia</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.dayPreference || '-'}</td></tr>
+        <tr><td style="padding:10px 0;color:#94a3b8;">Faixa de horário</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.timeWindow || '-'}</td></tr>
+        ${servicePayload.notes ? `<tr><td style="padding:10px 0;color:#94a3b8;">Observações</td><td style="padding:10px 0;color:#f1f5f9;">${servicePayload.notes}</td></tr>` : ''}
+      `;
+    } else if (servicePayload?.selectedHoursByDate) {
+      const agendaRows = Object.entries(servicePayload.selectedHoursByDate as Record<string, string[]>)
+        .map(([date, hours]) => {
+          const [y, m, d] = date.split('-');
+          return `<tr><td style="padding:6px 0;color:#94a3b8;">${d}/${m}/${y}</td><td style="padding:6px 0;color:#f1f5f9;">${hours.join(', ')} (${hours.length}h)</td></tr>`;
+        }).join('');
+      if (agendaRows) {
+        extraDetails = `
+          <tr><td colspan="2" style="padding:20px 0 16px;font-size:16px;font-weight:700;color:#a78bfa;border-bottom:1px solid #1e2a3a;border-top:1px solid #1e2a3a;">📅 Agenda</td></tr>
+          ${agendaRows}
+        `;
+      }
+    }
 
     await resend.emails.send({
       from: 'FB Services <onboarding@resend.dev>',
@@ -54,6 +76,7 @@ export async function POST(req: NextRequest) {
               <tr><td style="padding:10px 0;color:#94a3b8;">Level</td><td style="padding:10px 0;color:#f1f5f9;">${charLevel}</td></tr>
               <tr><td style="padding:10px 0;color:#94a3b8;">Vocação</td><td style="padding:10px 0;color:#f1f5f9;">${vocation}</td></tr>
               <tr><td style="padding:10px 0;color:#94a3b8;">Mundo</td><td style="padding:10px 0;color:#f1f5f9;">${world}</td></tr>
+              ${extraDetails}
             </table>
             <div style="margin-top:24px;text-align:center;">
               <a href="https://fbservices.vercel.app/admin" style="display:inline-block;background:linear-gradient(135deg,#7c3aed,#c026d3);color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:700;font-size:15px;">Abrir Painel Admin</a>

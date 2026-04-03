@@ -118,7 +118,7 @@ const sundayHours = ['21:00', '22:00', '23:00'];
 
 // TESTE TEMPORÁRIO — remover antes de produção
 const reservedHoursByDate: Record<string, string[]> = {
-  '2026-04-03': ['23:00', '00:00'],
+  '2026-04-03': ['22:00', '23:00', '00:00'],
   '2026-04-06': ['23:00', '00:00'],
   '2026-04-08': ['23:00', '00:00'],
   '2026-04-10': ['23:00', '00:00'],
@@ -620,6 +620,23 @@ async function loadFeedbacks() {
   }
 }
 
+function subscribeToOrderUpdates(userId: string) {
+    const channel = supabase
+      .channel('orders-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'orders',
+          filter: `user_id=eq.${userId}`,
+        },
+        () => { loadUserOrders(userId); }
+      )
+      .subscribe();
+    return channel;
+  }
+
 async function loadUserOrders(userId: string) {
   const { data, error } = await supabase
     .from('orders').select('*').eq('user_id', userId).order('created_at', { ascending: false });
@@ -928,6 +945,7 @@ setAsaasInvoiceUrl('');
       if (currentSession?.user) {
         ensureProfile(currentSession.user);
         loadUserOrders(currentSession.user.id);
+        subscribeToOrderUpdates(currentSession.user.id);
       }
 
       const fullName =
@@ -950,6 +968,7 @@ setAsaasInvoiceUrl('');
       if (newSession?.user) {
         ensureProfile(newSession.user);
         loadUserOrders(newSession.user.id);
+        subscribeToOrderUpdates(newSession.user.id);
       }
 
       const fullName =
@@ -2036,8 +2055,10 @@ const whatsappRcServiceMessage = encodeURIComponent(
         totalBrl: checkoutTotalValueNumber,
         totalRc: selectedPaymentMethod === 'rubini' ? rubiniCoinsTotal : 0,
         orderId: createdOrder.id,
+        servicePayload: servicePayload,
       }),
     }).catch(console.error);
+
     setPixReadyForWhatsapp(false);
     setRcReadyForWhatsapp(false);
     setCardAcknowledged(false);
