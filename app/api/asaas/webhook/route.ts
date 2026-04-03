@@ -53,11 +53,11 @@ export async function POST(req: Request) {
     let nextStatus: string | null = null;
 
     if (event === 'PAYMENT_RECEIVED' || event === 'PAYMENT_CONFIRMED') {
-      nextStatus = 'paid';
+      nextStatus = 'approved';
     }
 
     if (event === 'PAYMENT_OVERDUE' || event === 'PAYMENT_DELETED') {
-      nextStatus = 'failed';
+      nextStatus = 'rejected';
     }
 
     if (!nextStatus) {

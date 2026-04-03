@@ -610,7 +610,7 @@ if (!isAdmin) return null;
                     onClick={() => updateStatus(order.id, 'approved')}
                     className="rounded-2xl bg-yellow-400 px-4 py-2 text-sm font-bold text-black transition hover:bg-yellow-300"
                   >
-                    Aprovar
+                    Aprovar (manual)
                   </button>
 
                   <button
