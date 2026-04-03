@@ -199,10 +199,7 @@ export async function POST(req: NextRequest) {
         dueDate: formattedDueDate,
         description,
         externalReference: orderId,
-        callback: {
-          successUrl: `${siteUrl}/?payment=success&orderId=${orderId}`,
-          autoRedirect: false,
-        },
+      
       }),
       cache: 'no-store',
     });
