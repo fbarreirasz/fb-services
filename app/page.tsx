@@ -117,20 +117,7 @@ const saturdayHours = ['21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const sundayHours = ['21:00', '22:00', '23:00'];
 
 // TESTE TEMPORÁRIO — remover antes de produção
-const reservedHoursByDate: Record<string, string[]> = {
-  '2026-04-03': ['22:00', '23:00', '00:00'],
-  '2026-04-06': ['23:00', '00:00'],
-  '2026-04-08': ['23:00', '00:00'],
-  '2026-04-10': ['23:00', '00:00'],
-  '2026-04-13': ['23:00', '00:00'],
-  '2026-04-15': ['23:00', '00:00'],
-  '2026-04-17': ['23:00', '00:00'],
-  '2026-04-20': ['23:00', '00:00'],
-  '2026-04-22': ['23:00', '00:00'],
-  '2026-04-24': ['23:00', '00:00'],
-  '2026-04-27': ['23:00', '00:00'],
-  '2026-04-29': ['23:00', '00:00'],
-};
+const reservedHoursByDate: Record<string, string[]> = {};
 const bossOptions = [
   'Court Warlock',
   'Despor',
@@ -346,20 +333,19 @@ function isPastDate(date: Date) {
   return test < today;
 }
 
-function isSoldOut(date: Date) {
+function isSoldOut(date: Date, reservedMap: Record<string, string[]> = {}) {
   const dateKey = formatDateKey(date);
   const available = getAvailableHoursForDate(dateKey);
-  const reserved = reservedHoursByDate[dateKey] ?? [];
+  const reserved = reservedMap[dateKey] ?? [];
   if (available.length === 0) return false;
   return reserved.length >= available.length;
 }
 
-function isPartial(date: Date) {
-
+function isPartial(date: Date, reservedMap: Record<string, string[]> = {}) {
   if (isPastDate(date)) return false;
   const dateKey = formatDateKey(date);
   const available = getAvailableHoursForDate(dateKey);
-  const reserved = reservedHoursByDate[dateKey] ?? [];
+  const reserved = reservedMap[dateKey] ?? [];
   if (available.length === 0 || reserved.length === 0) return false;
   return reserved.length < available.length;
 }
@@ -377,13 +363,13 @@ function getAvailableHoursForDate(dateKey: string | null) {
   return weekdayHours;
 }
 
-function getReservedCountForDate(dateKey: string) {
-  return reservedHoursByDate[dateKey]?.length ?? 0;
+function getReservedCountForDate(dateKey: string, reservedMap: Record<string, string[]> = {}) {
+  return reservedMap[dateKey]?.length ?? 0;
 }
 
-function getRemainingHoursForDate(dateKey: string) {
+function getRemainingHoursForDate(dateKey: string, reservedMap: Record<string, string[]> = {}) {
   const available = getAvailableHoursForDate(dateKey);
-  const reserved = reservedHoursByDate[dateKey] ?? [];
+  const reserved = reservedMap[dateKey] ?? [];
   return Math.max(available.length - reserved.length, 0);
 }
 
@@ -601,6 +587,19 @@ const currentYear = new Date().getFullYear();
   const [rcRatePer1000, setRcRatePer1000] = useState(DEFAULT_RC_RATE_PER_1000);
 const [rcBlockSize, setRcBlockSize] = useState(DEFAULT_RC_BLOCK_SIZE);
 
+async function loadBlockedSlots() {
+  const { data, error } = await supabase
+    .from('blocked_slots').select('date, hour');
+  if (error) { console.error('Erro ao buscar blocked_slots:', error); return; }
+  if (data) {
+    const map: Record<string, string[]> = {};
+    data.forEach((slot: any) => {
+      if (!map[slot.date]) map[slot.date] = [];
+      map[slot.date].push(slot.hour);
+    });
+    setReservedHoursByDateState(map);
+  }
+}
 
 async function loadFeedbacks() {
   const { data, error } = await supabase
@@ -692,6 +691,7 @@ async function loadSiteSettings() {
 useEffect(() => {
   loadSiteSettings();
   loadFeedbacks();
+  loadBlockedSlots();
 }, []);
 
 useEffect(() => {
@@ -803,6 +803,7 @@ const [asaasInvoiceUrl, setAsaasInvoiceUrl] = useState('');
   const [isFeedbackServiceOpen, setIsFeedbackServiceOpen] = useState(false);
   const [isFeedbackFilterOpen, setIsFeedbackFilterOpen] = useState(false);
   const [feedbacks, setFeedbacks] = useState<FeedbackItem[]>([]);
+  const [reservedHoursByDateState, setReservedHoursByDateState] = useState<Record<string, string[]>>({});
 
   const monthCells = useMemo(
     () => getCalendarCells(currentYear, currentMonth),
@@ -1596,7 +1597,7 @@ setHasPurchasedService(false);
     ? getAvailableHoursForDate(activeHoursTab)
     : [];
   const activeReservedForDate = activeHoursTab
-    ? reservedHoursByDate[activeHoursTab] ?? []
+    ? reservedHoursByDateState[activeHoursTab] ?? []
     : [];
 
   const { weekdayRate, weekendRate, weekdayHoursCount, weekendHoursCount } =
@@ -2167,13 +2168,13 @@ const whatsappRcServiceMessage = encodeURIComponent(
               const key = formatDateKey(date);
               const selected = selectedDates.includes(key);
               const past = isPastDate(date);
-              const soldOut = isSoldOut(date);
-              const partial = isPartial(date);
+              const soldOut = isSoldOut(date, reservedHoursByDateState);
+              const partial = isPartial(date, reservedHoursByDateState);
               const sunday = isSunday(date);
               const saturday = isSaturday(date);
               const weekend = sunday || saturday;
-              const reservedCount = getReservedCountForDate(key);
-              const remainingHours = getRemainingHoursForDate(key);
+              const reservedCount = getReservedCountForDate(key, reservedHoursByDateState);
+              const remainingHours = getRemainingHoursForDate(key, reservedHoursByDateState);
               const reservedTooltip = getReservedTooltipText(reservedCount);
 
               let cls =
