@@ -2,10 +2,10 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
 
 export const metadata = {
-  title: "FB Services — Services Tibia no RubinOT",
+  title: "FB Services — On RubinOT",
   description: "Char Level Up, Rotação de Bosses, Tasks, Quests e muito mais. Agende pelo site com segurança e profissionalismo.",
   openGraph: {
-    title: "FB Services — Services Tibia no RubinOT",
+    title: "FB Services — On RubinOT",
     description: "Char Level Up, Rotação de Bosses, Tasks, Quests e muito mais. Agende pelo site!",
     url: "https://fbservices.vercel.app",
     siteName: "FB Services",
