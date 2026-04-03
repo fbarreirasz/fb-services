@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: 'FB Services <onboarding@resend.dev>',
-      to: 'fbarreirasz@gmail.com',
+      to: 'fbservices.onrubinot@gmail.com',
       subject: `🔔 Novo pedido — ${serviceType} (${customerName})`,
       html: `
         <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#0a0f1e;color:#e2e8f0;border-radius:12px;overflow:hidden;">
