@@ -425,7 +425,7 @@ export default function CalculadoraPage() {
               </div>
             ) : (
               <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-300">
-                Cálculo conservador. Ative os toggles acima para ficar mais fiel ao tempo de jogo. O tempo real pode variar conforme vocação, set, disponibilidade das hunts e players online.
+                Cálculo conservador. Ative os toggles acima para ficar mais fiel ao tempo de jogo. O tempo real e valores pode variar conforme vocação, set, disponibilidade das hunts, raw/hora e players online.
               </div>
             )}
 
