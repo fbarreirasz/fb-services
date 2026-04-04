@@ -26,6 +26,7 @@ import {
   Target,
   Upload,
   User,
+  Calculator,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -37,6 +38,7 @@ const menuOptions = [
   { id: 'regras', label: 'Termos de serviço', icon: Shield },
   { id: 'feedbacks', label: 'Feedbacks', icon: Star },
   { id: 'contato', label: 'Contato', icon: MessageCircle },
+   { id: 'calculadora', label: 'Calculadora XP', icon: Calculator },
 ];
 
 const serviceOptions = [
@@ -2369,6 +2371,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                       if (item.id === 'regras') goToPage('regras');
                       if (item.id === 'feedbacks') goToPage('feedbacks');
                       if (item.id === 'contato') openWhatsappContact();
+                      if (item.id === 'calculadora') { window.location.href = '/calculadora'; return; }
                     }}
                     className="group/item flex items-center justify-between rounded-[14px] border border-transparent bg-white/0 px-3 py-2.5 text-left transition hover:border-white/10 hover:bg-white/5 hover:shadow-[0_0_12px_rgba(251,191,36,0.12)]"
                     style={{
