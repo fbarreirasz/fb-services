@@ -26,7 +26,7 @@ import {
   Target,
   Upload,
   User,
-  Calculator,
+  Wrench,
   WalletCards,
   X,
 } from 'lucide-react';
@@ -37,7 +37,7 @@ const menuOptions = [
   { id: 'agenda', label: 'Agenda', icon: CalendarDays },
   { id: 'regras', label: 'Termos de serviço', icon: Shield },
   { id: 'feedbacks', label: 'Feedbacks', icon: Star },
-  { id: 'calculadora', label: 'Calculadora XP', icon: Calculator },
+  { id: 'ferramentas', label: 'Ferramentas', icon: Wrench },
   { id: 'contato', label: 'Contato', icon: MessageCircle },
   
 ];
@@ -2371,7 +2371,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                       if (item.id === 'agenda') goToPage('agenda');
                       if (item.id === 'regras') goToPage('regras');
                       if (item.id === 'feedbacks') goToPage('feedbacks');
-                      if (item.id === 'calculadora') { window.location.href = '/calculadora'; return; }
+                      if (item.id === 'ferramentas') { window.location.href = '/ferramentas'; return; }
                       if (item.id === 'contato') openWhatsappContact();
                   
                     }}
