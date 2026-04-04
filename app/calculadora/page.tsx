@@ -297,17 +297,20 @@ export default function CalculadoraPage() {
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <input
-                  type="range"
-                  min={1} max={100}
-                  value={pct}
-                  onChange={(e) => setPct(Number(e.target.value))}
-                  className="calc-range flex-1"
-                />
-                <span className="min-w-[44px] text-right text-sm font-semibold text-white">
-                  {pct}% Selecione a % referente a quanto falta para o próximo level.
-                </span>
+              <div>
+                <div className="flex items-center gap">
+                  <input
+                    type="range"
+                    min={1} max={100}
+                    value={pct}
+                    onChange={(e) => setPct(Number(e.target.value))}
+                    className="calc-range flex-1"
+                  />
+                  <span className="min-w-[44px] text-right text-sm text-white">
+                    {pct}%
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] text-zinc-500">Selecione a % referente a quanto falta para o próximo level.</p>
               </div>
             )}
           </div>
@@ -394,15 +397,25 @@ export default function CalculadoraPage() {
                 <p className="mt-1 text-2xl font-black text-white">{fDays(result.totalH)}</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-zinc-400">Sessões de {hSess}h</p>
-                <p className="mt-1 text-2xl font-black text-white">
-                  {result.totalSess.toLocaleString('pt-BR')}
-                </p>
+                <p className="text-xs text-zinc-400">Total de horas</p>
+                <p className="mt-1 text-2xl font-black text-white">{result.totalH.toFixed(1)}h</p>
+                <p className="mt-1 text-[11px] text-zinc-500">{result.totalSess} sessões de {hSess}h</p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="text-xs text-zinc-400">XP total do range</p>
-                <p className="mt-1 text-2xl font-black text-white">{fkk(result.totalXp)}</p>
-              </div>
+              {(() => {
+                const hourRate = result.totalH <= 14 ? 16 : 14;
+                const totalPrice = result.totalH * hourRate;
+                return (
+                  <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
+                    <p className="text-xs text-emerald-300">Valor estimado</p>
+                    <p className="mt-1 text-2xl font-black text-white">
+                      R$ {Math.round(totalPrice).toLocaleString('pt-BR')}
+                    </p>
+                    <p className="mt-1 text-[11px] text-zinc-500">
+                      R$ {hourRate}/h · {result.totalH.toFixed(1)}h total {result.totalH <= 14 ? '(até 14h)' : '(acima de 14h)'}
+                    </p>
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Aviso */}
