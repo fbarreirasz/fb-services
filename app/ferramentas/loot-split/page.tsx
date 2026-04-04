@@ -5,8 +5,9 @@ import { useState } from 'react';
 function parseGold(text: string): number {
   const lower = text.toLowerCase();
   let total = 0;
-  const matches = lower.matchAll(/(\d[\d.,]*)\s*(platinum|gold|gp|pp|kk|k)?/g);
-  for (const m of matches) {
+  const re = /(\d[\d.,]*)\s*(platinum|gold|gp|pp|kk|k)?/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(lower)) !== null) {
     const val = parseFloat(m[1].replace(',', '.'));
     const unit = m[2] || '';
     if (unit.includes('platinum') || unit === 'pp') total += val * 100;
