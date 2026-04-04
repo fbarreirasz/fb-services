@@ -275,7 +275,7 @@ export default function CalculadoraPage() {
                       : 'border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10'
                   }`}
                 >
-                  {m === 'xp' ? 'XP exato' : '%'}
+                  {m === 'xp' ? 'XP (Valor)' : 'XP (Porcentagem)'}
                 </button>
               ))}
             </div>
@@ -291,7 +291,7 @@ export default function CalculadoraPage() {
                 />
                 {xpPreviewPct && (
                   <p className="mt-1 text-xs text-zinc-500">
-                    ≈ {xpPreviewPct}% do level {levelFrom} · total do level:{' '}
+                    ≈ {xpPreviewPct}% do level {levelFrom}
                     {totalLevelXp.toLocaleString('pt-BR')} XP
                   </p>
                 )}
@@ -306,7 +306,7 @@ export default function CalculadoraPage() {
                   className="calc-range flex-1"
                 />
                 <span className="min-w-[44px] text-right text-sm font-semibold text-white">
-                  {pct}%
+                  {pct}% Selecione a % referente a quanto falta para o próximo level.
                 </span>
               </div>
             )}
