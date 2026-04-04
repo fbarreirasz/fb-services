@@ -52,11 +52,12 @@ export default function LootSplitPage() {
     const balanceMatch = log.match(/balance of the session:\s*(-?[\d,]+)/i);
 
     // Extrai membros do log
-    const memberMatches = [...log.matchAll(/(\w[\w\s]+)\s*:\s*([\d,]+)\s*xp/gi)];
-    const logMembers: Member[] = memberMatches.map(m => ({
-      name: m[1].trim(),
-      bankTransfer: 0,
-    }));
+    const logMembers: Member[] = [];
+    const reMember = /(\w[\w\s]+)\s*:\s*([\d,]+)\s*xp/gi;
+    let mm: RegExpExecArray | null;
+    while ((mm = reMember.exec(log)) !== null) {
+      logMembers.push({ name: mm[1].trim(), bankTransfer: 0 });
+    }
 
     // Se não achou membros no log, usa os manuais
     const finalMembers: Member[] = logMembers.length > 0
