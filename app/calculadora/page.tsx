@@ -1,5 +1,12 @@
 'use client';
 
+const sliderCSS = `
+  .calc-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: #1e293b; outline: none; }
+  .calc-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #c026d3); cursor: pointer; border: 2px solid #0b1220; box-shadow: 0 0 8px rgba(124,58,237,0.5); }
+  .calc-range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #c026d3); cursor: pointer; border: 2px solid #0b1220; }
+  .calc-range::-webkit-slider-runnable-track { height: 4px; border-radius: 9999px; }
+`;
+
 import { useState, useEffect } from 'react';
 
 const RATES = [
@@ -191,7 +198,9 @@ export default function CalculadoraPage() {
   }
 
   return (
-    <main className="relative min-h-screen overflow-hidden text-white"
+    <>
+      <style>{sliderCSS}</style>
+      <main className="relative min-h-screen overflow-hidden text-white"
       style={{
         background: 'radial-gradient(circle at 50% 14%, rgba(205,215,255,0.10) 0%, transparent 18%), radial-gradient(circle at 52% 18%, rgba(168,140,255,0.25) 0%, rgba(168,140,255,0.08) 14%, transparent 30%), linear-gradient(to bottom, #09101f 0%, #050b17 42%, #040814 72%, #030611 100%)',
       }}
@@ -294,7 +303,7 @@ export default function CalculadoraPage() {
                   min={1} max={100}
                   value={pct}
                   onChange={(e) => setPct(Number(e.target.value))}
-                  className="flex-1 accent-violet-500"
+                  className="calc-range flex-1"
                 />
                 <span className="min-w-[44px] text-right text-sm font-semibold text-white">
                   {pct}%
@@ -335,23 +344,19 @@ export default function CalculadoraPage() {
           {/* Toggles */}
           <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3">
             <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={hasStam}
-                onChange={(e) => setHasStam(e.target.checked)}
-                className="h-4 w-4 accent-violet-500"
-              />
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${hasStam ? 'border-violet-500 bg-violet-600' : 'border-white/20 bg-white/5'}`}
+  onClick={() => setHasStam(!hasStam)} style={{cursor:'pointer'}}>
+  {hasStam && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+</div>
               <span className="text-sm text-zinc-300">
-                Stamina bonus <span className="text-zinc-500">(1.5x - Calculo baseado nas 3h)</span>
+                Stamina bonus <span className="text-zinc-500">(1.5x)</span>
               </span>
             </label>
             <label className="flex cursor-pointer items-center gap-3">
-              <input
-                type="checkbox"
-                checked={hasStore}
-                onChange={(e) => setHasStore(e.target.checked)}
-                className="h-4 w-4 accent-amber-400"
-              />
+              <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${hasStore ? 'border-amber-400 bg-amber-500' : 'border-white/20 bg-white/5'}`}
+  onClick={() => setHasStore(!hasStore)} style={{cursor:'pointer'}}>
+  {hasStore && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+</div>
               <span className="text-sm text-zinc-300">
                 Boosts <span className="text-zinc-500">(+50%)</span>
               </span>
@@ -441,6 +446,7 @@ export default function CalculadoraPage() {
           Cálculo baseado nos rates do RubinOT · XP base do Tibia Global
         </p>
       </div>
-    </main>
+   </main>
+    </>
   );
-}
+}git
