@@ -266,7 +266,7 @@ export default function CalculadoraPage() {
                       : 'border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10'
                   }`}
                 >
-                  {m === 'xp' ? 'XP exato (do jogo)' : '% estimado'}
+                  {m === 'xp' ? 'XP exato' : '%'}
                 </button>
               ))}
             </div>
@@ -307,7 +307,7 @@ export default function CalculadoraPage() {
           <div className="mb-5 grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
-                Raw XP/hora (em kk)
+                Raw XP/hora
               </label>
               <input
                 type="number"
@@ -316,7 +316,7 @@ export default function CalculadoraPage() {
                 onChange={(e) => setRawKK(Number(e.target.value))}
                 className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50"
               />
-              <p className="mt-1 text-[11px] text-zinc-500">1 = 1kk/h · 1.4 = 1.4kk/h</p>
+              <p className="mt-1 text-[11px] text-zinc-500">Ex: 5 = 5kk/h · 5.5 = 5.5kk/h</p>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">
@@ -342,7 +342,7 @@ export default function CalculadoraPage() {
                 className="h-4 w-4 accent-violet-500"
               />
               <span className="text-sm text-zinc-300">
-                Stamina bonus ativa <span className="text-zinc-500">(1.5x — primeiras 3h)</span>
+                Stamina bonus <span className="text-zinc-500">(1.5x - Calculo baseado nas 3h)</span>
               </span>
             </label>
             <label className="flex cursor-pointer items-center gap-3">
@@ -353,11 +353,11 @@ export default function CalculadoraPage() {
                 className="h-4 w-4 accent-amber-400"
               />
               <span className="text-sm text-zinc-300">
-                Boost de loja <span className="text-zinc-500">(+50% — ative pra bater com o jogo)</span>
+                Boosts <span className="text-zinc-500">(+50%)</span>
               </span>
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-zinc-500">Multiplicador para lv {levelFrom}:</span>
+              <span className="text-xs text-zinc-500">Multiplicador para level {levelFrom}:</span>
               <span className="rounded-full bg-violet-500/20 px-3 py-0.5 text-xs font-semibold text-violet-300">
                 {multLabel}
               </span>
@@ -403,11 +403,11 @@ export default function CalculadoraPage() {
             {/* Aviso */}
             {hasStore ? (
               <div className="mb-5 rounded-2xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs text-sky-300">
-                Boost de loja ativo (+50%). Estimativa alinhada com o tempo exibido no jogo.
+                Valores aproximados in game, podendo haver divergência nos horários.
               </div>
             ) : (
               <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-300">
-                Cálculo conservador, sem boost de loja. Ative o toggle acima para bater com o tempo do jogo. O tempo real pode variar conforme vocação, set, hunt disponível e população do mundo.
+                Cálculo conservador. Ative os toggles acima para ficar mais fiel ao tempo de jogo. O tempo real pode variar conforme vocação, set, disponibilidade das hunts e players online.
               </div>
             )}
 
@@ -438,7 +438,7 @@ export default function CalculadoraPage() {
 
         {/* Footer note */}
         <p className="mt-6 text-center text-xs text-zinc-600">
-          Cálculo baseado nos rates do RubinOT · XP base do Tibia Global · Stamina bonus 3h
+          Cálculo baseado nos rates do RubinOT · XP base do Tibia Global
         </p>
       </div>
     </main>
