@@ -2,378 +2,380 @@
 
 import { useState } from 'react';
 
-// ─── DATA ──────────────────────────────────────────────────────────────────
-type Material = { name: string; qty: number };
-type Tier = { label: 'Basic' | 'Intricate' | 'Powerful'; color: string; effect: string; materials: Material[] };
-type Imbuement = { id: string; name: string; desc: string; category: string; icon: string; tiers: Tier[] };
+// ─── design tokens — idênticos ao skills / stamina / loot-split ─
+const BG     = '#111118';
+const CARD   = '#1a1a24';
+const BORDER = 'rgba(255,255,255,0.07)';
+const PURPLE = '#a78bfa';
+
+// ─── icons ───────────────────────────────────────────────────────
+const GOLD_TOKEN_ICON   = 'https://intibia.com/_next/image?url=%2Ftibia%2Fgold-token.png&w=16&q=75';
+const MARKET_ICON       = 'https://intibia.com/_next/image?url=%2Ftibia%2Fcambio-house.png&w=32&q=75';
+const CRYSTAL_COIN_ICON = 'https://intibia.com/_next/image?url=%2Ftibia%2Fcrystal-coin.png&w=16&q=75';
+
+const IMB_ICON_OVERRIDES: Record<string, Record<1|2|3, string>> = {
+  punch: {
+    1: 'https://www.tibiawiki.com.br/images/6/62/Imbuement_Skillboost_Fist1.png',
+    2: 'https://www.tibiawiki.com.br/images/d/de/Imbuement_Skillboost_Fist2.png',
+    3: 'https://www.tibiawiki.com.br/images/7/74/Imbuement_Skillboost_Fist3.png',
+  },
+};
+
+function imbIcon(id: string, tier: 1|2|3): string {
+  return IMB_ICON_OVERRIDES[id]?.[tier]
+    ?? `https://intibia.com/_next/image?url=%2Fimbuements%2F${id}-${tier}.png&w=64&q=75`;
+}
+
+function matIcon(name: string): string {
+  const slug = name.replace(/'/g, '%27').replace(/ /g, '_');
+  return `https://tibia.fandom.com/wiki/Special:FilePath/${slug}.gif`;
+}
+
+const BASE_COST = { Basic: 7_500, Intricate: 60_000, Powerful: 250_000 };
+
+type Material  = { name: string; qty: number };
+type TierLabel = 'Basic' | 'Intricate' | 'Powerful';
+type Tier      = { label: TierLabel; color: string; effect: string; materials: Material[] };
+type Imbuement = { id: string; name: string; desc: string; tiers: Tier[] };
+
+const T = (label: TierLabel, effect: string, ...mats: [string, number][]): Tier => ({
+  label,
+  color: label === 'Basic' ? '#22c55e' : label === 'Intricate' ? '#3b82f6' : '#ef4444',
+  effect,
+  materials: mats.map(([name, qty]) => ({ name, qty })),
+});
 
 const IMBUEMENTS: Imbuement[] = [
-  {
-    id: 'vampirism', name: 'Vampirism', desc: 'Life leech', category: 'Leech',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fvampirism-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+5% life leech',  materials: [{ name: 'Vampire Teeth', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+10% life leech', materials: [{ name: 'Vampire Teeth', qty: 25 }, { name: 'Bloody Pincers', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+25% life leech', materials: [{ name: 'Vampire Teeth', qty: 25 }, { name: 'Bloody Pincers', qty: 15 }, { name: 'Piece of Dead Brain', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'void', name: 'Void', desc: 'Mana leech', category: 'Leech',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fvoid-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% mana leech',  materials: [{ name: 'Rope Belt', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% mana leech',  materials: [{ name: 'Rope Belt', qty: 25 }, { name: 'Waspoid Wing', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% mana leech',  materials: [{ name: 'Rope Belt', qty: 25 }, { name: 'Waspoid Wing', qty: 15 }, { name: 'Vexclaw Talon', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'strike', name: 'Strike', desc: 'Critical damage', category: 'Offensive',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fstrike-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+10% crit (25%)',  materials: [{ name: 'Orc Tooth', qty: 20 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+20% crit (25%)',  materials: [{ name: 'Orc Tooth', qty: 20 }, { name: 'Troll Green', qty: 25 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+50% crit (25%)',  materials: [{ name: 'Orc Tooth', qty: 20 }, { name: 'Troll Green', qty: 25 }, { name: 'Ogre Ear Stud', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'swiftness', name: 'Swiftness', desc: 'Speed boost', category: 'Utility',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fswiftness-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+10 speed',  materials: [{ name: 'Centipede Leg', qty: 20 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+20 speed',  materials: [{ name: 'Centipede Leg', qty: 20 }, { name: 'Deepling Fin', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+30 speed',  materials: [{ name: 'Centipede Leg', qty: 20 }, { name: 'Deepling Fin', qty: 15 }, { name: 'Lizard Essence', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'featherweight', name: 'Featherweight', desc: 'Capacity increase', category: 'Utility',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Ffeatherweight-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+150 oz',   materials: [{ name: 'Thin Silk', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+300 oz',   materials: [{ name: 'Thin Silk', qty: 25 }, { name: 'Louse', qty: 25 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+600 oz',   materials: [{ name: 'Thin Silk', qty: 25 }, { name: 'Louse', qty: 25 }, { name: 'Rusted Iron', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'vibrancy', name: 'Vibrancy', desc: 'Paralysis removal', category: 'Utility',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fvibrancy-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '40% removal',  materials: [{ name: 'Fish Fin', qty: 20 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '70% removal',  materials: [{ name: 'Fish Fin', qty: 20 }, { name: 'Turtle Shell', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '100% removal', materials: [{ name: 'Fish Fin', qty: 20 }, { name: 'Turtle Shell', qty: 15 }, { name: 'Flask of Embalming Fluid', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'lich_shroud', name: 'Lich Shroud', desc: 'Death Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Flich-shroud-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% death prot',  materials: [{ name: 'Piece of Dead Brain', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% death prot',  materials: [{ name: 'Piece of Dead Brain', qty: 25 }, { name: 'Vampire Teeth', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% death prot',  materials: [{ name: 'Piece of Dead Brain', qty: 25 }, { name: 'Vampire Teeth', qty: 15 }, { name: 'Cursed Bone', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'snake_skin', name: 'Snake Skin', desc: 'Earth Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fsnake-skin-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% earth prot',  materials: [{ name: 'Snake Skin', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% earth prot',  materials: [{ name: 'Snake Skin', qty: 25 }, { name: 'Piece of Scarab Shell', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% earth prot',  materials: [{ name: 'Snake Skin', qty: 25 }, { name: 'Piece of Scarab Shell', qty: 15 }, { name: 'Wyvern Talisman', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'dragon_hide', name: 'Dragon Hide', desc: 'Fire Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fdragon-hide-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% fire prot',  materials: [{ name: 'Dragon Scale', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% fire prot',  materials: [{ name: 'Dragon Scale', qty: 25 }, { name: 'Green Dragon Leather', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% fire prot',  materials: [{ name: 'Dragon Scale', qty: 25 }, { name: 'Green Dragon Leather', qty: 15 }, { name: 'Blazing Bone', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'quara_scale', name: 'Quara Scale', desc: 'Ice Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fquara-scale-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% ice prot',  materials: [{ name: 'Quara Scale', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% ice prot',  materials: [{ name: 'Quara Scale', qty: 25 }, { name: 'Deepling Scale', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% ice prot',  materials: [{ name: 'Quara Scale', qty: 25 }, { name: 'Deepling Scale', qty: 15 }, { name: 'Piece of Draconian Steel', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'cloud_fabric', name: 'Cloud Fabric', desc: 'Energy Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fcloud-fabric-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% energy prot',  materials: [{ name: 'Rorc Feather', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% energy prot',  materials: [{ name: 'Rorc Feather', qty: 25 }, { name: 'Badger Fur', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% energy prot',  materials: [{ name: 'Rorc Feather', qty: 25 }, { name: 'Badger Fur', qty: 15 }, { name: 'Crystal Bone', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'demon_presence', name: 'Demon Presence', desc: 'Holy Protection', category: 'Protection',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fdemon-presence-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+3% holy prot',  materials: [{ name: 'Demon Dust', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+5% holy prot',  materials: [{ name: 'Demon Dust', qty: 25 }, { name: 'Silver Brooch', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+8% holy prot',  materials: [{ name: 'Demon Dust', qty: 25 }, { name: 'Silver Brooch', qty: 15 }, { name: 'Piece of Hellfire Armor', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'precision', name: 'Precision', desc: 'Distance Fighting', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fprecision-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 distance',  materials: [{ name: 'Elven Hoof', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 distance',  materials: [{ name: 'Elven Hoof', qty: 25 }, { name: 'Cyclops Toe', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 distance',  materials: [{ name: 'Elven Hoof', qty: 25 }, { name: 'Cyclops Toe', qty: 15 }, { name: 'Silencer Claws', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'epiphany', name: 'Epiphany', desc: 'Magic Level', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fepiphany-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 magic level',  materials: [{ name: 'Pixie Dust', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 magic level',  materials: [{ name: 'Pixie Dust', qty: 25 }, { name: 'Fairy Wings', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 magic level',  materials: [{ name: 'Pixie Dust', qty: 25 }, { name: 'Fairy Wings', qty: 15 }, { name: 'Unicorn Horn Powder', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'scorch', name: 'Scorch', desc: 'Fire Damage', category: 'Elemental',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fscorch-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: 'Fire +1',  materials: [{ name: 'Faun Legs', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: 'Fire +2',  materials: [{ name: 'Faun Legs', qty: 25 }, { name: 'Blazing Bone', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: 'Fire +3',  materials: [{ name: 'Faun Legs', qty: 25 }, { name: 'Blazing Bone', qty: 15 }, { name: 'Fiery Heart', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'venom', name: 'Venom', desc: 'Earth Damage', category: 'Elemental',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fvenom-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: 'Earth +1',  materials: [{ name: 'Brimstone Fangs', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: 'Earth +2',  materials: [{ name: 'Brimstone Fangs', qty: 25 }, { name: 'Wyvern Talisman', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: 'Earth +3',  materials: [{ name: 'Brimstone Fangs', qty: 25 }, { name: 'Wyvern Talisman', qty: 15 }, { name: 'Werewolf Fur', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'frost', name: 'Frost', desc: 'Ice Damage', category: 'Elemental',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Ffrost-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: 'Ice +1',  materials: [{ name: 'Deepling Warts', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: 'Ice +2',  materials: [{ name: 'Deepling Warts', qty: 25 }, { name: 'Piece of Draconian Steel', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: 'Ice +3',  materials: [{ name: 'Deepling Warts', qty: 25 }, { name: 'Piece of Draconian Steel', qty: 15 }, { name: 'Frosty Heart', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'electrify', name: 'Electrify', desc: 'Energy Damage', category: 'Elemental',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Felectrify-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: 'Energy +1',  materials: [{ name: 'Sparkion Stings', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: 'Energy +2',  materials: [{ name: 'Sparkion Stings', qty: 25 }, { name: 'Rorc Feather', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: 'Energy +3',  materials: [{ name: 'Sparkion Stings', qty: 25 }, { name: 'Rorc Feather', qty: 15 }, { name: 'Crystal Bone', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'reap', name: 'Reap', desc: 'Death Damage', category: 'Elemental',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Freap-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: 'Death +1',  materials: [{ name: 'Cursed Bone', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: 'Death +2',  materials: [{ name: 'Cursed Bone', qty: 25 }, { name: 'Piece of Dead Brain', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: 'Death +3',  materials: [{ name: 'Cursed Bone', qty: 25 }, { name: 'Piece of Dead Brain', qty: 15 }, { name: 'Sacred Wood Chip', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'chop', name: 'Chop', desc: 'Axe Fighting', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fchop-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 axe',  materials: [{ name: 'War Crystal', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 axe',  materials: [{ name: 'War Crystal', qty: 25 }, { name: 'Minotaur Leather', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 axe',  materials: [{ name: 'War Crystal', qty: 25 }, { name: 'Minotaur Leather', qty: 15 }, { name: 'Minotaur Trophy', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'slash', name: 'Slash', desc: 'Sword Fighting', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fslash-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 sword',  materials: [{ name: "Lion's Mane", qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 sword',  materials: [{ name: "Lion's Mane", qty: 25 }, { name: 'Orc Tusk', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 sword',  materials: [{ name: "Lion's Mane", qty: 25 }, { name: 'Orc Tusk', qty: 15 }, { name: 'Broken Gladiator Shield', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'bash', name: 'Bash', desc: 'Club Fighting', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fbash-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 club',  materials: [{ name: 'Winter Wolf Fur', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 club',  materials: [{ name: 'Winter Wolf Fur', qty: 25 }, { name: 'Cyclops Toe', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 club',  materials: [{ name: 'Winter Wolf Fur', qty: 25 }, { name: 'Cyclops Toe', qty: 15 }, { name: 'Giant Sword', qty: 5 }] },
-    ],
-  },
-  {
-    id: 'blockade', name: 'Blockade', desc: 'Shielding', category: 'Skill',
-    icon: 'https://intibia.com/_next/image?url=%2Fimbuements%2Fblockade-3.png&w=64&q=75',
-    tiers: [
-      { label: 'Basic',    color: '#22c55e', effect: '+1 shield',  materials: [{ name: 'Hardened Bone', qty: 25 }] },
-      { label: 'Intricate',color: '#3b82f6', effect: '+2 shield',  materials: [{ name: 'Hardened Bone', qty: 25 }, { name: 'Wyrm Scale', qty: 15 }] },
-      { label: 'Powerful', color: '#ef4444', effect: '+4 shield',  materials: [{ name: 'Hardened Bone', qty: 25 }, { name: 'Wyrm Scale', qty: 15 }, { name: 'Piece of Royal Steel', qty: 5 }] },
-    ],
-  },
+  { id: 'vampirism',      name: 'Vampirism',      desc: 'Life Leech',         tiers: [ T('Basic','+5% Life leech',['Vampire Teeth',25]), T('Intricate','+10% Life leech',['Vampire Teeth',25],['Bloody Pincers',15]), T('Powerful','+25% Life leech',['Vampire Teeth',25],['Bloody Pincers',15],['Piece of Dead Brain',5]) ] },
+  { id: 'void',           name: 'Void',           desc: 'Mana Leech',         tiers: [ T('Basic','+3% Mana leech',['Rope Belt',25]), T('Intricate','+5% Mana leech',['Rope Belt',25],['Silencer Claws',25]), T('Powerful','+8% Mana leech',['Rope Belt',25],['Silencer Claws',25],['Some Grimeleech Wings',5]) ] },
+  { id: 'strike',         name: 'Strike',         desc: 'Critical Damage',    tiers: [ T('Basic','15% Critical damage',['Protective Charm',20]), T('Intricate','25% Critical damage',['Protective Charm',20],['Sabretooth',25]), T('Powerful','50% Critical damage',['Protective Charm',20],['Sabretooth',25],['Vexclaw Talon',5]) ] },
+  { id: 'scorch',         name: 'Scorch',         desc: 'Fire Damage',        tiers: [ T('Basic','10% Damage converted',['Fiery Heart',25]), T('Intricate','25% Damage converted',['Fiery Heart',25],['Green Dragon Scale',5]), T('Powerful','50% Damage converted',['Fiery Heart',25],['Green Dragon Scale',5],['Demon Horn',5]) ] },
+  { id: 'frost',          name: 'Frost',          desc: 'Ice Damage',         tiers: [ T('Basic','10% Damage converted',['Frosty Heart',25]), T('Intricate','25% Damage converted',['Frosty Heart',25],['Seacrest Hair',10]), T('Powerful','50% Damage converted',['Frosty Heart',25],['Seacrest Hair',10],['Polar Bear Paw',5]) ] },
+  { id: 'electrify',      name: 'Electrify',      desc: 'Energy Damage',      tiers: [ T('Basic','10% Damage converted',['Rorc Feather',25]), T('Intricate','25% Damage converted',['Rorc Feather',25],['Peacock Feather Fan',5]), T('Powerful','50% Damage converted',['Rorc Feather',25],['Peacock Feather Fan',5],['Energy Vein',1]) ] },
+  { id: 'venom',          name: 'Venom',          desc: 'Earth Damage',       tiers: [ T('Basic','10% Damage converted',['Swamp Grass',25]), T('Intricate','25% Damage converted',['Swamp Grass',25],['Poisonous Slime',20]), T('Powerful','50% Damage converted',['Swamp Grass',25],['Poisonous Slime',20],['Slime Heart',2]) ] },
+  { id: 'reap',           name: 'Reap',           desc: 'Death Damage',       tiers: [ T('Basic','10% Damage converted',['Pile of Grave Earth',25]), T('Intricate','25% Damage converted',['Pile of Grave Earth',25],['Demonic Skeletal Hand',20]), T('Powerful','50% Damage converted',['Pile of Grave Earth',25],['Demonic Skeletal Hand',20],['Petrified Scream',5]) ] },
+  { id: 'bash',           name: 'Bash',           desc: 'Club Fighting',      tiers: [ T('Basic','+1x Club fighting',['Cyclops Toe',20]), T('Intricate','+2x Club fighting',['Cyclops Toe',20],['Ogre Nose Ring',15]), T('Powerful','+4x Club fighting',['Cyclops Toe',20],['Ogre Nose Ring',15],["Warmaster's Wristguards",10]) ] },
+  { id: 'chop',           name: 'Chop',           desc: 'Axe Fighting',       tiers: [ T('Basic','+1x Axe fighting',['Orc Tooth',20]), T('Intricate','+2x Axe fighting',['Orc Tooth',20],['Battle Stone',25]), T('Powerful','+4x Axe fighting',['Orc Tooth',20],['Battle Stone',25],['Moohtant Horn',20]) ] },
+  { id: 'slash',          name: 'Slash',          desc: 'Sword Fighting',     tiers: [ T('Basic','+1x Sword fighting',["Lion's Mane",25]), T('Intricate','+2x Sword fighting',["Lion's Mane",25],["Mooh'Tah Shell",25]), T('Powerful','+4x Sword fighting',["Lion's Mane",25],["Mooh'Tah Shell",25],['War Crystal',5]) ] },
+  { id: 'precision',      name: 'Precision',      desc: 'Distance Fighting',  tiers: [ T('Basic','+1x Distance fighting',['Elven Scouting Glass',25]), T('Intricate','+2x Distance fighting',['Elven Scouting Glass',25],['Elven Hoof',20]), T('Powerful','+4x Distance fighting',['Elven Scouting Glass',25],['Elven Hoof',20],['Metal Spike',10]) ] },
+  { id: 'epiphany',       name: 'Epiphany',       desc: 'Magic Level',        tiers: [ T('Basic','+1x Magic level',['Elvish Talisman',25]), T('Intricate','+2x Magic level',['Elvish Talisman',25],['Broken Shamanic Staff',15]), T('Powerful','+4x Magic level',['Elvish Talisman',25],['Broken Shamanic Staff',15],['Strand of Medusa Hair',15]) ] },
+  { id: 'punch',          name: 'Punch',          desc: 'Fist Fighting',      tiers: [ T('Basic','+1x Fist fighting',['Tarantula Egg',25]), T('Intricate','+2x Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20]), T('Powerful','+4x Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20],['Gold-Brocaded Cloth',15]) ] },
+  { id: 'blockade',       name: 'Blockade',       desc: 'Shielding',          tiers: [ T('Basic','+1x Shielding',['Piece of Scarab Shell',20]), T('Intricate','+2x Shielding',['Piece of Scarab Shell',20],['Brimstone Shell',25]), T('Powerful','+4x Shielding',['Piece of Scarab Shell',20],['Brimstone Shell',25],['Frazzle Skin',25]) ] },
+  { id: 'lich-shroud',    name: 'Lich Shroud',    desc: 'Death Protection',   tiers: [ T('Basic','+2% Death protection',['Flask of Embalming Fluid',25]), T('Intricate','+5% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20]), T('Powerful','+10% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20],['Mystical Hourglass',5]) ] },
+  { id: 'snake-skin',     name: 'Snake Skin',     desc: 'Earth Protection',   tiers: [ T('Basic','+3% Earth protection',['Piece of Swampling Wood',25]), T('Intricate','+8% Earth protection',['Piece of Swampling Wood',25],['Snake Skin',10]), T('Powerful','+15% Earth protection',['Piece of Swampling Wood',25],['Snake Skin',10],['Brimstone Fangs',10]) ] },
+  { id: 'dragon-hide',    name: 'Dragon Hide',    desc: 'Fire Protection',    tiers: [ T('Basic','+3% Fire protection',['Green Dragon Leather',20]), T('Intricate','+8% Fire protection',['Green Dragon Leather',20],['Blazing Bone',10]), T('Powerful','+15% Fire protection',['Green Dragon Leather',20],['Blazing Bone',10],['Draken Sulphur',5]) ] },
+  { id: 'quara-scale',    name: 'Quara Scale',    desc: 'Ice Protection',     tiers: [ T('Basic','+3% Ice protection',['Winter Wolf Fur',25]), T('Intricate','+8% Ice protection',['Winter Wolf Fur',25],['Thick Fur',15]), T('Powerful','+15% Ice protection',['Winter Wolf Fur',25],['Thick Fur',15],['Deepling Warts',10]) ] },
+  { id: 'cloud-fabric',   name: 'Cloud Fabric',   desc: 'Energy Protection',  tiers: [ T('Basic','+3% Energy protection',['Wyvern Talisman',20]), T('Intricate','+8% Energy protection',['Wyvern Talisman',20],['Crawler Head Plating',15]), T('Powerful','+15% Energy protection',['Wyvern Talisman',20],['Crawler Head Plating',15],['Wyrm Scale',10]) ] },
+  { id: 'demon-presence', name: 'Demon Presence', desc: 'Holy Protection',    tiers: [ T('Basic','+3% Holy protection',['Cultish Robe',25]), T('Intricate','+8% Holy protection',['Cultish Robe',25],['Cultish Mask',25]), T('Powerful','+15% Holy protection',['Cultish Robe',25],['Cultish Mask',25],['Hellspawn Tail',20]) ] },
+  { id: 'swiftness',      name: 'Swiftness',      desc: 'Speed Boost',        tiers: [ T('Basic','+10 Speed',['Damselfly Wing',15]), T('Intricate','+15 Speed',['Damselfly Wing',15],['Compass',25]), T('Powerful','+30 Speed',['Damselfly Wing',15],['Compass',25],['Waspoid Wing',20]) ] },
+  { id: 'vibrancy',       name: 'Vibrancy',       desc: 'Paralysis Removal',  tiers: [ T('Basic','15% Paralysis removal',['Wereboar Hooves',20]), T('Intricate','25% Paralysis removal',['Wereboar Hooves',20],['Crystallized Anger',15]), T('Powerful','50% Paralysis removal',['Wereboar Hooves',20],['Crystallized Anger',15],['Quill',5]) ] },
+  { id: 'featherweight',  name: 'Featherweight',  desc: 'Capacity Increase',  tiers: [ T('Basic','+150 Oz capacity',['Fairy Wings',20]), T('Intricate','+250 Oz capacity',['Fairy Wings',20],['Little Bowl of Myrrh',10]), T('Powerful','+500 Oz capacity',['Fairy Wings',20],['Little Bowl of Myrrh',10],['Goosebump Leather',5]) ] },
 ];
-
-const ALL_MATERIALS = Array.from(new Set(IMBUEMENTS.flatMap(i => i.tiers.flatMap(t => t.materials.map(m => m.name)))));
-
-const BG = '#111118';
-const CARD = '#1a1a24';
-const BORDER = 'rgba(255,255,255,0.07)';
 
 function fNum(n: number) { return Math.round(n).toLocaleString('pt-BR'); }
 
-function ImbIcon({ src, size = 48 }: { src: string; size?: number }) {
+// ─── MatIcon with fallback ───────────────────────────────────────
+function MatIcon({ name, size = 18 }: { name: string; size?: number }) {
+  const [err, setErr] = useState(false);
+  if (err) return <div style={{ width: size, height: size, borderRadius: 3, background: 'rgba(255,255,255,0.06)', flexShrink: 0 }} />;
+  return <img src={matIcon(name)} alt={name} width={size} height={size} onError={() => setErr(true)}
+    style={{ width: size, height: size, objectFit: 'contain', flexShrink: 0, imageRendering: 'pixelated' }} />;
+}
+
+// ─── CopyBtn — igual ao loot-split ──────────────────────────────
+function CopyBtn({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const copy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
   return (
-    <img
-      src={src}
-      alt=""
-      width={size}
-      height={size}
-      style={{ width: size, height: size, objectFit: 'contain', imageRendering: 'auto' }}
-    />
+    <button onClick={copy} title={`Copiar "${text}"`}
+      className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg transition"
+      style={{ border: copied ? '1px solid rgba(167,139,250,0.5)' : `1px solid ${BORDER}`,
+        background: copied ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.03)',
+        opacity: copied ? 1 : 0.5, cursor: 'pointer' }}
+      onMouseEnter={e => (e.currentTarget.style.opacity = '1')}
+      onMouseLeave={e => { if (!copied) e.currentTarget.style.opacity = '0.5'; }}>
+      {copied
+        ? <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        : <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke={PURPLE} strokeWidth="2" strokeLinecap="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>}
+    </button>
   );
 }
 
+// ─── TotalRow — tooltip ABAIXO ──────────────────────────────────
+function TotalRow({ marketCost, tokenCost }: { marketCost: number; tokenCost: number }) {
+  const [hover, setHover] = useState(false);
+  const hasData    = marketCost > 0 || tokenCost > 0;
+  const bestToken  = tokenCost  > 0 && (tokenCost  <= marketCost || marketCost === 0);
+  const bestMarket = marketCost > 0 && (marketCost  <  tokenCost  || tokenCost  === 0);
+  const display    = hasData ? Math.min(...[marketCost, tokenCost].filter(v => v > 0)) : 0;
+
+  return (
+    <div style={{ borderTop: `1px solid ${BORDER}`, paddingTop: 8, marginTop: 6, position: 'relative' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: hasData ? 'help' : 'default' }}
+        onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>Total</span>
+          {hasData && <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <img src={CRYSTAL_COIN_ICON} width={12} height={12} style={{ objectFit: 'contain' }} />
+          <span style={{ fontSize: 13, fontWeight: 900, color: hasData ? PURPLE : 'rgba(255,255,255,0.2)' }}>
+            {hasData ? fNum(display) : '—'}
+          </span>
+        </div>
+      </div>
+      {hover && hasData && (
+        <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: '50%', transform: 'translateX(-50%)',
+          background: '#0a0a10', border: `1px solid ${BORDER}`, borderRadius: 10, padding: '10px 12px',
+          zIndex: 999, width: 230, boxShadow: '0 12px 40px rgba(0,0,0,0.8)' }}>
+          {tokenCost > 0 && (
+            <div style={{ marginBottom: marketCost > 0 ? 8 : 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                <img src={GOLD_TOKEN_ICON} width={12} height={12} style={{ objectFit: 'contain' }} />
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Apenas Gold Tokens</span>
+                {bestToken && <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 800, marginLeft: 'auto' }}>✓ melhor</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <img src={CRYSTAL_COIN_ICON} width={11} height={11} style={{ objectFit: 'contain' }} />
+                <span style={{ fontSize: 12, fontWeight: 800, color: bestToken ? '#22c55e' : PURPLE }}>{fNum(tokenCost)}</span>
+                {marketCost > 0 && <span style={{ fontSize: 10, color: bestToken ? '#16a34a' : '#ef4444', marginLeft: 2 }}>({bestToken ? '' : '+'}{fNum(tokenCost - marketCost)}gp)</span>}
+              </div>
+            </div>
+          )}
+          {marketCost > 0 && (
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 3 }}>
+                <img src={MARKET_ICON} width={12} height={12} style={{ objectFit: 'contain' }} />
+                <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.45)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Apenas Market</span>
+                {bestMarket && <span style={{ fontSize: 9, color: '#22c55e', fontWeight: 800, marginLeft: 'auto' }}>✓ melhor</span>}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <img src={CRYSTAL_COIN_ICON} width={11} height={11} style={{ objectFit: 'contain' }} />
+                <span style={{ fontSize: 12, fontWeight: 800, color: bestMarket ? '#22c55e' : PURPLE }}>{fNum(marketCost)}</span>
+                {tokenCost > 0 && <span style={{ fontSize: 10, color: bestMarket ? '#16a34a' : '#ef4444', marginLeft: 2 }}>({bestMarket ? '' : '+'}{fNum(marketCost - tokenCost)}gp)</span>}
+              </div>
+            </div>
+          )}
+          <p style={{ fontSize: 9, color: 'rgba(255,255,255,0.25)', marginTop: 8, textAlign: 'center', borderTop: `1px solid ${BORDER}`, paddingTop: 7 }}>
+            Inclui preço base + taxa de sucesso de 100%
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── page ────────────────────────────────────────────────────────
 export default function ImbuimentosPage() {
-  const [selected, setSelected] = useState<Imbuement | null>(null);
-  const [prices, setPrices] = useState<Record<string, number>>({});
+  const [selected, setSelected]             = useState<Imbuement | null>(null);
+  const [prices, setPrices]                 = useState<Record<string, number>>({});
+  const [goldTokenPrice, setGoldTokenPrice] = useState<number>(0);
 
-  function getPrice(mat: string) { return prices[mat] ?? 0; }
-  function setPrice(mat: string, val: number) { setPrices(p => ({ ...p, [mat]: val })); }
+  const getPrice = (mat: string) => prices[mat] ?? 0;
+  const setPrice = (mat: string, val: number) => setPrices(p => ({ ...p, [mat]: val }));
 
-  function tierCost(tier: Tier) {
-    return tier.materials.reduce((s, m) => s + getPrice(m.name) * m.qty, 0);
-  }
+  const marketCost = (tier: Tier) => {
+    const mat = tier.materials.reduce((s, m) => s + getPrice(m.name) * m.qty, 0);
+    return mat === 0 ? 0 : mat + BASE_COST[tier.label];
+  };
+  const tokenCost = (tier: Tier) => {
+    if (!goldTokenPrice) return 0;
+    return tier.materials.length * 2 * goldTokenPrice + BASE_COST[tier.label];
+  };
+  const bestCost = (tier: Tier) => {
+    const mc = marketCost(tier); const tc = tokenCost(tier);
+    if (!mc && !tc) return 0; if (!mc) return tc; if (!tc) return mc;
+    return Math.min(mc, tc);
+  };
 
   const modalMaterials = selected
     ? Array.from(new Set(selected.tiers.flatMap(t => t.materials.map(m => m.name))))
     : [];
+  const matSlots: (string | null)[] = [
+    modalMaterials[0] ?? null, modalMaterials[1] ?? null, modalMaterials[2] ?? null,
+  ];
 
   return (
     <main className="relative min-h-screen text-white" style={{ background: BG }}>
+
+      {/* glow igual ao skills */}
+      <div className="pointer-events-none fixed inset-0"
+        style={{ backgroundImage: 'radial-gradient(ellipse 70% 35% at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 70%)' }} />
+
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-10">
-        {/* Header */}
+
+        {/* ── Header ── */}
         <div className="mb-8 text-center">
-          <button onClick={() => window.location.href = '/ferramentas'}
+          <button onClick={() => (window.location.href = '/ferramentas')}
             className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-zinc-500 transition hover:text-white"
             style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)' }}>
             ← Ferramentas
           </button>
-          <p className="text-xs uppercase tracking-[0.4em]" style={{ color: 'rgba(167,139,250,0.6)' }}>On RubinOT</p>
-          <h1 className="mt-1 text-3xl font-black text-white">Preços de <span style={{ color: '#a78bfa' }}>Imbuements</span></h1>
+          <p className="text-xs uppercase tracking-[0.4em]" style={{ color: 'rgba(167,139,250,0.6)' }}>FB Services</p>
+          <h1 className="mt-1 text-3xl font-black text-white">
+            Preços dos <span style={{ color: PURPLE }}>Imbuimentos</span>
+          </h1>
           <p className="mt-2 text-sm text-zinc-500">Descubra a maneira mais barata de fazer seus imbuements</p>
         </div>
 
-        {/* Grid */}
+        {/* ── Grid de cards ── */}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {IMBUEMENTS.map(imb => {
-            const minCost = Math.min(...imb.tiers.map(t => tierCost(t)));
-            const hasPrices = imb.tiers[0].materials.some(m => getPrice(m.name) > 0);
+            const cost = bestCost(imb.tiers[2]);
             return (
               <button key={imb.id} onClick={() => setSelected(imb)}
-                className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all hover:border-white/20"
+                className="flex items-center gap-3 rounded-xl px-4 py-3 text-left transition-all hover:brightness-110"
                 style={{ border: `1px solid ${BORDER}`, background: CARD }}>
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl overflow-hidden"
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl overflow-hidden"
                   style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
-                  <ImbIcon src={imb.icon} size={40} />
+                  <img src={imbIcon(imb.id, 3)} alt={imb.name} width={36} height={36} style={{ objectFit: 'contain' }} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="font-bold text-white text-sm truncate">{imb.name}</p>
-                  <p className="text-[11px] text-zinc-500 truncate">{imb.desc}</p>
+                  <p className="text-sm font-bold text-white truncate">{imb.name}</p>
+                  <p className="text-[11px] truncate text-zinc-600">{imb.desc}</p>
                 </div>
-                <div className="shrink-0">
-                  {hasPrices ? (
-                    <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                      style={{ background: 'rgba(167,139,250,0.15)', color: '#a78bfa' }}>
-                      {fNum(minCost)}
-                    </span>
-                  ) : (
-                    <span className="rounded-full px-2 py-0.5 text-[11px] font-bold"
-                      style={{ background: 'rgba(167,139,250,0.08)', color: '#7c3aed' }}>
-                      •?
-                    </span>
-                  )}
-                </div>
+                <span className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold"
+                  style={{ background: cost > 0 ? 'rgba(167,139,250,0.12)' : 'rgba(167,139,250,0.06)', color: cost > 0 ? PURPLE : '#7c3aed' }}>
+                  {cost > 0 ? fNum(cost) : '•?'}
+                </span>
               </button>
             );
           })}
         </div>
 
-        {/* Modal */}
+        {/* ── Modal ── */}
         {selected && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)' }}
             onClick={e => e.target === e.currentTarget && setSelected(null)}>
-            <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl"
-              style={{ background: '#1a1a24', border: `1px solid ${BORDER}` }}>
-              {/* Modal header */}
-              <div className="flex items-center justify-between border-b p-5" style={{ borderColor: BORDER }}>
+
+            <div className="w-full overflow-y-auto rounded-2xl"
+              style={{ maxWidth: 960, maxHeight: '92vh', background: CARD, border: `1px solid ${BORDER}` }}>
+
+              {/* modal header */}
+              <div className="flex items-center justify-between p-5"
+                style={{ borderBottom: `1px solid ${BORDER}` }}>
                 <div className="flex items-center gap-3">
                   <div className="flex h-12 w-12 items-center justify-center rounded-xl overflow-hidden"
-                    style={{ background: 'rgba(255,255,255,0.05)', border: `1px solid ${BORDER}` }}>
-                    <ImbIcon src={selected.icon} size={44} />
+                    style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
+                    <img src={imbIcon(selected.id, 3)} alt={selected.name} width={44} height={44} style={{ objectFit: 'contain' }} />
                   </div>
                   <div>
-                    <h2 className="text-lg font-black text-white">{selected.name}</h2>
-                    <p className="text-xs text-zinc-500">{selected.desc}</p>
+                    <h2 className="text-xl font-black text-white">{selected.name}</h2>
+                    <p className="text-xs text-zinc-600">{selected.desc}</p>
                   </div>
                 </div>
-                <button onClick={() => setSelected(null)} className="text-zinc-500 hover:text-white text-xl transition">✕</button>
+                <button onClick={() => setSelected(null)}
+                  className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-500 transition hover:text-white"
+                  style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)', cursor: 'pointer' }}>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
               </div>
 
-              {/* Tiers */}
-              <div className="grid grid-cols-3 gap-3 p-5">
-                {selected.tiers.map(tier => (
-                  <div key={tier.label} className="rounded-xl p-4" style={{ border: `1px solid ${BORDER}`, background: '#111118' }}>
-                    <div className="mb-3 flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg overflow-hidden"
-                        style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
-                        <ImbIcon src={selected.icon} size={28} />
-                      </div>
-                      <span className="rounded-md px-2 py-0.5 text-[10px] font-black uppercase"
-                        style={{ background: tier.color + '22', color: tier.color }}>
-                        {tier.label}
-                      </span>
-                    </div>
-                    <p className="mb-3 text-xs font-semibold" style={{ color: tier.color }}>{tier.effect}</p>
-                    <div className="mb-3 flex flex-col gap-1.5">
-                      {tier.materials.map(m => (
-                        <div key={m.name} className="flex items-center justify-between text-xs">
-                          <span className="text-zinc-400">{m.qty}x {m.name}</span>
+              {/* tier cards — mesma estrutura dos cards do skills */}
+              <div className="grid gap-3 p-5" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                {selected.tiers.map((tier, ti) => {
+                  const tierNum = (ti + 1) as 1|2|3;
+                  const mc = marketCost(tier);
+                  const tc = tokenCost(tier);
+                  const hasPrices  = mc > 0 || tc > 0;
+                  const bestToken  = tc > 0 && (tc <= mc || mc === 0);
+                  const bestMarket = mc > 0 && (mc <  tc || tc === 0);
+                  const bestIcon   = bestToken ? GOLD_TOKEN_ICON : bestMarket ? MARKET_ICON : null;
+
+                  return (
+                    <div key={tier.label} className="rounded-xl p-4"
+                      style={{ border: `1px solid ${BORDER}`, background: BG }}>
+
+                      {/* tier header — mesma linha do skills (ícone + badge) */}
+                      <div className="mb-3 flex items-center gap-2">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg overflow-hidden"
+                          style={{ background: 'rgba(255,255,255,0.04)', border: `1px solid ${BORDER}` }}>
+                          <img src={imbIcon(selected.id, tierNum)} alt={tier.label} width={28} height={28} style={{ objectFit: 'contain' }} />
                         </div>
-                      ))}
+                        <span className="rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-widest"
+                          style={{ background: tier.color + '22', color: tier.color }}>
+                          {tier.label}
+                        </span>
+                      </div>
+
+                      {/* efeito — igual ao label de habilidade do skills */}
+                      <p className="mb-3 text-[11px] font-bold" style={{ color: tier.color }}>{tier.effect}</p>
+
+                      {/* lista de materiais */}
+                      <div className="mb-2 flex flex-col gap-2">
+                        {tier.materials.map(m => (
+                          <div key={m.name} className="flex items-center gap-2">
+                            <MatIcon name={m.name} size={16} />
+                            <span className="flex-1 truncate text-[11px] text-zinc-400">{m.qty}x {m.name}</span>
+                            {hasPrices && bestIcon && (
+                              <img src={bestIcon} width={12} height={12} style={{ objectFit: 'contain', flexShrink: 0, opacity: 0.8 }} />
+                            )}
+                            <CopyBtn text={m.name} />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* custo base */}
+                      <div className="flex justify-end mb-1">
+                        <span className="text-[9px] text-zinc-700 font-bold uppercase tracking-wider">
+                          + {fNum(BASE_COST[tier.label])}gp base
+                        </span>
+                      </div>
+
+                      <TotalRow marketCost={mc} tokenCost={tc} />
                     </div>
-                    <div className="border-t pt-2 flex justify-between items-center" style={{ borderColor: BORDER }}>
-                      <span className="text-[10px] text-zinc-600 uppercase tracking-wide">Total</span>
-                      <span className="text-sm font-black" style={{ color: '#a78bfa' }}>
-                        {tierCost(tier) > 0 ? fNum(tierCost(tier)) : '—'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* Price inputs */}
-              <div className="border-t p-5" style={{ borderColor: BORDER }}>
-                <p className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Preços dos Recursos</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {modalMaterials.map(mat => (
-                    <div key={mat} className="flex items-center gap-2 rounded-xl px-3 py-2"
-                      style={{ border: `1px solid ${BORDER}`, background: '#111118' }}>
-                      <span className="text-[10px] text-zinc-500 flex-1 truncate">{mat}</span>
-                      <input
-                        type="number"
-                        value={getPrice(mat) || ''}
-                        onChange={e => setPrice(mat, Number(e.target.value))}
-                        placeholder="0"
-                        className="w-20 bg-transparent text-right text-xs font-bold text-white outline-none"
-                        style={{ color: getPrice(mat) > 0 ? '#a78bfa' : '#6b7280' }}
-                      />
+              {/* price inputs — mesmo estilo dos inputs do skills */}
+              <div className="px-5 pb-5">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
+                  Preços dos Recursos
+                </p>
+                <div className="grid grid-cols-4 gap-3">
+
+                  {/* Gold Token */}
+                  <div className="flex flex-col gap-2 rounded-xl p-3"
+                    style={{ border: `1px solid ${BORDER}`, background: BG }}>
+                    <div className="flex items-center gap-2">
+                      <img src={GOLD_TOKEN_ICON} width={16} height={16} style={{ objectFit: 'contain', flexShrink: 0 }} />
+                      <span className="flex-1 truncate text-[11px] font-semibold text-zinc-500">Gold Token</span>
+                      <CopyBtn text="gold token" />
                     </div>
-                  ))}
+                    <input type="number" min="0" value={goldTokenPrice || ''} placeholder="0"
+                      onChange={e => setGoldTokenPrice(Number(e.target.value))}
+                      className="w-full bg-transparent text-sm font-black outline-none"
+                      style={{ border: 'none', color: goldTokenPrice > 0 ? PURPLE : 'rgba(255,255,255,0.2)', fontFamily: 'inherit' }} />
+                  </div>
+
+                  {/* Material slots */}
+                  {matSlots.map((mat, i) => {
+                    const price = mat ? getPrice(mat) : 0;
+                    return (
+                      <div key={i} className="flex flex-col gap-2 rounded-xl p-3"
+                        style={{ border: `1px solid ${mat ? BORDER : 'rgba(255,255,255,0.03)'}`,
+                          background: mat ? BG : 'rgba(255,255,255,0.01)', opacity: mat ? 1 : 0.35 }}>
+                        <div className="flex items-center gap-2">
+                          {mat ? <MatIcon name={mat} size={16} /> : <div style={{ width: 16, height: 16, borderRadius: 3, background: 'rgba(255,255,255,0.05)', flexShrink: 0 }} />}
+                          <span className="flex-1 truncate text-[11px] font-semibold text-zinc-500">{mat ?? '—'}</span>
+                          {mat && <CopyBtn text={mat} />}
+                        </div>
+                        <input type="number" min="0" disabled={!mat}
+                          value={mat && price > 0 ? price : ''} placeholder="0"
+                          onChange={e => mat && setPrice(mat, Number(e.target.value))}
+                          className="w-full bg-transparent text-sm font-black outline-none"
+                          style={{ border: 'none', color: price > 0 ? PURPLE : 'rgba(255,255,255,0.2)',
+                            fontFamily: 'inherit', cursor: mat ? 'text' : 'not-allowed' }} />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

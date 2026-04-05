@@ -88,12 +88,12 @@ function fTime(charges: number, vip: boolean) {
 const BG = '#111118';
 const CARD = '#1a1a24';
 const BORDER = 'rgba(255,255,255,0.07)';
-const AMBER = '#f59e0b';
+const AMBER = '#a78bfa';
 
 function Checkbox({ checked, onChange, label, sub, icon }: { checked: boolean; onChange: () => void; label: string; sub: string; icon?: string }) {
   return (
     <div onClick={onChange} className="flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors"
-      style={{ border: `1px solid ${checked ? 'rgba(245,158,11,0.35)' : BORDER}`, background: checked ? 'rgba(245,158,11,0.07)' : 'rgba(255,255,255,0.02)' }}>
+      style={{ border: `1px solid ${checked ? 'rgba(167,139,250,0.35)' : BORDER}`, background: checked ? 'rgba(167,139,250,0.07)' : 'rgba(255,255,255,0.02)' }}>
       <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
         style={{ border: `2px solid ${checked ? AMBER : 'rgba(255,255,255,0.18)'}`, background: checked ? AMBER : 'transparent' }}>
         {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
@@ -143,45 +143,27 @@ export default function SkillsPage() {
   return (
     <main className="relative min-h-screen text-white" style={{ background: BG }}>
       <div className="relative z-10 mx-auto max-w-6xl px-4 py-10">
+
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-6 text-center">
           <button onClick={() => (window.location.href = '/ferramentas')}
             className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-zinc-500 transition hover:text-white"
             style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)' }}>
             ← Ferramentas
           </button>
-          <p className="text-xs uppercase tracking-[0.4em]" style={{ color: 'rgba(245,158,11,0.6)' }}>On RubinOT</p>
+          <p className="text-xs uppercase tracking-[0.4em]" style={{ color: 'rgba(167,139,250,0.6)' }}>FB Services</p>
           <h1 className="mt-1 text-3xl font-black text-white">Calculadora de <span style={{ color: AMBER }}>Skills</span></h1>
           <p className="mt-2 text-sm text-zinc-500">Planeje seu treinamento com precisão. Calcule custos, tempo e a melhor estratégia para sua vocação.</p>
         </div>
 
-        {/* Top cost cards */}
-        <div className="mb-5 grid grid-cols-3 gap-3">
-          <div className="rounded-2xl p-5" style={{ border: `1px solid rgba(245,158,11,0.25)`, background: CARD }}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Custo em Gold</p>
-            <p className="text-2xl font-black" style={{ color: AMBER }}>
-              {cost.gold > 0 ? fNum(cost.gold) + ',00' : '0'}
-              <span className="ml-2 text-sm font-normal text-zinc-500">gp</span>
-            </p>
-          </div>
-          <div className="rounded-2xl p-5" style={{ border: `1px solid rgba(96,165,250,0.25)`, background: CARD }}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Custo em Coins</p>
-            <p className="text-2xl font-black text-sky-400">
-              {fNum(cost.rc)}
-              <span className="ml-2 text-sm font-normal text-zinc-500">RC</span>
-            </p>
-          </div>
-          <div className="rounded-2xl p-5" style={{ border: `1px solid rgba(52,211,153,0.25)`, background: CARD }}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Total Cargas</p>
-            <p className="text-2xl font-black text-emerald-400">{charges > 0 ? fNum(cost.total) : '0'}</p>
-          </div>
-        </div>
-
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[420px_1fr]">
-          {/* LEFT */}
+
+          {/* ── LEFT COLUMN ── */}
           <div className="flex flex-col gap-4">
+
             {/* Vocação + Habilidade + Levels */}
             <div className="rounded-2xl p-5" style={{ border: `1px solid ${BORDER}`, background: CARD }}>
+
               {/* Vocação */}
               <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Vocação</p>
               <div className="mb-6 flex gap-2">
@@ -191,7 +173,7 @@ export default function SkillsPage() {
                     style={{
                       width: 68, height: 68,
                       border: `2px solid ${voc === v.id ? AMBER : BORDER}`,
-                      background: voc === v.id ? 'rgba(245,158,11,0.12)' : 'rgba(255,255,255,0.02)',
+                      background: voc === v.id ? 'rgba(167,139,250,0.12)' : 'rgba(255,255,255,0.02)',
                     }}>
                     <img src={v.img} alt={v.label} className="h-9 w-9 object-contain" style={{ imageRendering: 'pixelated' }} />
                     <span className="text-[9px] font-bold" style={{ color: voc === v.id ? AMBER : '#4b5563' }}>{v.label}</span>
@@ -229,7 +211,7 @@ export default function SkillsPage() {
                     className="w-full bg-transparent text-center text-2xl font-black text-white outline-none" />
                 </div>
                 <span className="text-zinc-600 text-lg">→</span>
-                <div className="flex-1 rounded-xl p-4 text-center" style={{ border: `1px solid rgba(245,158,11,0.3)`, background: '#0d0d14' }}>
+                <div className="flex-1 rounded-xl p-4 text-center" style={{ border: `1px solid rgba(167,139,250,0.3)`, background: '#0d0d14' }}>
                   <p className="mb-1 text-[9px] font-bold uppercase tracking-widest text-zinc-600">Desejado</p>
                   <input type="number" value={to} min={from + 1}
                     onChange={e => setTo(Math.max(from + 1, Number(e.target.value)))}
@@ -244,16 +226,16 @@ export default function SkillsPage() {
                   <span style={{ color: AMBER }}>{pct}% Restante</span>
                 </div>
                 <div className="relative h-2.5 w-full overflow-hidden rounded-full" style={{ background: '#0d0d14', border: `1px solid ${BORDER}` }}>
-                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #d97706, ${AMBER})` }} />
+                  <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, #7c3aed, ${AMBER})` }} />
                   <input type="range" min={1} max={100} value={pct} onChange={e => setPct(Number(e.target.value))}
                     className="absolute inset-0 w-full cursor-pointer opacity-0" />
                 </div>
               </div>
 
-              {/* Loyalty */}
+              {/* Loyalty note */}
               <div className="rounded-xl p-3" style={{ border: '1px solid rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.06)' }}>
-                <p className="mb-0.5 text-xs font-bold text-sky-400">Nota sobre Loyalty:</p>
-                <p className="text-xs text-zinc-500">A calculadora usa skills base. Não insira valores com bônus de loyalty.</p>
+                <p className="mb-0.5 text-xs font-bold text-sky-400">Obervações importantes:</p>
+                <p className="text-xs text-zinc-500">A calculadora foi adaptada para o Rubinot, leve em consideração algumas divergências no tempo, varinhas e valores em gold coin. Preço considerando média de 80k o RC.</p>
               </div>
             </div>
 
@@ -268,8 +250,59 @@ export default function SkillsPage() {
             </div>
           </div>
 
-          {/* RIGHT */}
+          {/* ── RIGHT COLUMN ── */}
           <div className="flex flex-col gap-4">
+
+            {/* ── Cost cards — compactos, alinhados com o bloco de vocações ── */}
+            <div className="grid grid-cols-3 gap-3">
+              {/* Gold */}
+              <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
+                style={{ border: `1px solid rgba(167,139,250,0.22)`, background: CARD, minHeight: 64 }}>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: 'rgba(167,139,250,0.1)', border: `1px solid rgba(167,139,250,0.2)` }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">Custo em Gold</p>
+                  <p className="text-lg font-black leading-none truncate" style={{ color: AMBER }}>
+                    {cost.gold > 0 ? fNum(cost.gold) : '0'}
+                    <span className="ml-1 text-xs font-normal text-zinc-500">gp</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* RC */}
+              <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
+                style={{ border: `1px solid rgba(96,165,250,0.22)`, background: CARD, minHeight: 64 }}>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: 'rgba(96,165,250,0.1)', border: `1px solid rgba(96,165,250,0.2)` }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">Custo em Coins</p>
+                  <p className="text-lg font-black leading-none truncate text-sky-400">
+                    {fNum(cost.rc)}
+                    <span className="ml-1 text-xs font-normal text-zinc-500">RC</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Cargas */}
+              <div className="flex items-center gap-3 rounded-2xl px-4 py-3"
+                style={{ border: `1px solid rgba(52,211,153,0.22)`, background: CARD, minHeight: 64 }}>
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                  style={{ background: 'rgba(52,211,153,0.1)', border: `1px solid rgba(52,211,153,0.2)` }}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#34d399" strokeWidth="2" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-600 mb-0.5">Total Cargas</p>
+                  <p className="text-lg font-black leading-none truncate text-emerald-400">
+                    {charges > 0 ? fNum(cost.total) : '0'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Weapon panel */}
             <div className="flex-1 rounded-2xl p-5" style={{ border: `1px solid ${BORDER}`, background: CARD }}>
               {/* Tabs */}
@@ -318,7 +351,7 @@ export default function SkillsPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl text-2xl"
-                    style={{ background: 'rgba(245,158,11,0.1)', border: `1px solid rgba(245,158,11,0.2)` }}>
+                    style={{ background: 'rgba(167,139,250,0.1)', border: `1px solid rgba(167,139,250,0.2)` }}>
                     ⏱️
                   </div>
                   <div>
@@ -348,6 +381,7 @@ export default function SkillsPage() {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
 

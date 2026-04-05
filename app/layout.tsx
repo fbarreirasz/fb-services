@@ -1,5 +1,7 @@
 import "./globals.css";
 import { Analytics } from "@vercel/analytics/react";
+import { ThemeProvider } from '@/app/providers/ThemeProvider';
+import React from 'react';
 
 export const metadata = {
   title: "FB Services — On RubinOT",
@@ -22,8 +24,13 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR">
-      <body>{children}<Analytics /></body>
+    <html lang="pt-BR" data-theme="dark">
+      <body>
+        <ThemeProvider>
+          {children}
+          <Analytics />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

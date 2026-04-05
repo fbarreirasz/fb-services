@@ -18,7 +18,7 @@ export default function Page() {
           ← Ferramentas
         </button>
         <div className="text-6xl mb-4">📦</div>
-        <h1 className="text-3xl font-black text-amber-400">Valores do Market</h1>
+        <h1 className="text-3xl font-black text-amber-400">Exaltation Forge</h1>
         <p className="mt-4 text-zinc-400">Esta ferramenta está sendo desenvolvida.</p>
         <div className="mt-6 inline-block rounded-full bg-amber-500/20 px-4 py-2 text-sm font-semibold text-amber-300">Em breve</div>
       </div>

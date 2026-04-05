@@ -4,6 +4,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { ThemeToggle } from '@/components/ThemeToggle'
+
 import {
   CalendarDays,
   CheckCircle2,
@@ -2412,7 +2414,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
               <ChevronDown className="h-4 w-4 text-zinc-300 transition group-hover:text-amber-200" />
             </button>
           ) : (
-            <>
+            <>  <ThemeToggle />
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen((prev) => !prev)}

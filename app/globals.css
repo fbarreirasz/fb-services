@@ -76,3 +76,509 @@ a {
 }
 
 .star { animation: star-twinkle var(--dur, 3s) ease-in-out infinite; }
+
+/* ─── TEMA: DARK (padrão) ─────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --bg:           #111118;
+  --bg-card:      #1a1a24;
+  --bg-card-deep: #0d0d14;
+  --bg-hover:     rgba(255,255,255,0.04);
+  --border:       rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.14);
+
+  --text-primary:   #ffffff;
+  --text-secondary: rgba(255,255,255,0.72);
+  --text-muted:     rgba(255,255,255,0.45);
+  --text-faint:     rgba(255,255,255,0.25);
+  --text-label:     rgba(255,255,255,0.35);
+
+  --accent:       #a78bfa;
+  --accent-deep:  #7c3aed;
+  --accent-glow:  rgba(124,58,237,0.15);
+  --accent-border:rgba(167,139,250,0.28);
+
+  --success: #22c55e;
+  --danger:  #ef4444;
+  --info:    #3b82f6;
+
+  --shadow: 0 8px 32px rgba(0,0,0,0.6);
+  --glow:   radial-gradient(ellipse 70% 35% at 50% 0%, rgba(124,58,237,0.1) 0%, transparent 70%);
+}
+
+/* ─── TEMA: LIGHT ─────────────────────────────────────────────── */
+[data-theme="light"] {
+  --bg:           #f4f4f8;
+  --bg-card:      #ffffff;
+  --bg-card-deep: #eeeef4;
+  --bg-hover:     rgba(0,0,0,0.03);
+  --border:       rgba(0,0,0,0.09);
+  --border-hover: rgba(0,0,0,0.16);
+
+  --text-primary:   #0f0f1a;
+  --text-secondary: rgba(0,0,0,0.78);
+  --text-muted:     rgba(0,0,0,0.5);
+  --text-faint:     rgba(0,0,0,0.3);
+  --text-label:     rgba(0,0,0,0.4);
+
+  --accent:       #7c3aed;
+  --accent-deep:  #5b21b6;
+  --accent-glow:  rgba(124,58,237,0.08);
+  --accent-border:rgba(124,58,237,0.25);
+
+  --success: #16a34a;
+  --danger:  #dc2626;
+  --info:    #2563eb;
+
+  --shadow: 0 4px 20px rgba(0,0,0,0.1);
+  --glow:   radial-gradient(ellipse 70% 35% at 50% 0%, rgba(124,58,237,0.06) 0%, transparent 70%);
+}
+
+/* ─── APLICAÇÃO GLOBAL ────────────────────────────────────────── */
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  transition: background 0.25s ease, color 0.2s ease;
+}
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT MODE — Substitui o bloco anterior no final do globals.css
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Paleta ─────────────────────────────────────────────────────
+   bg-page   : #f0eeeb  (bege quente, neutro)
+   bg-card   : #ffffff
+   bg-card-2 : #f7f6f3
+   bg-input  : #f0efed
+   text-1    : #1c1a26  (quase preto, levemente roxo)
+   text-2    : #4a4860  (cinza-roxo médio)
+   text-3    : #87849a  (muted)
+   accent    : #6d28d9  (roxo — mesma identidade do site)
+   border    : rgba(0,0,0,0.07)
+   shadow    : 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05)
+   ─────────────────────────────────────────────────────────────── */
+
+/* ─── Transição global ──────────────────────────────────────── */
+[data-theme="light"] * {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease !important;
+}
+
+/* ─── Base ──────────────────────────────────────────────────── */
+[data-theme="light"] body {
+  background: #f0eeeb !important;
+  color: #1c1a26 !important;
+}
+
+/* ─── Fundo da home (inline style) ─────────────────────────── */
+[data-theme="light"] main.relative.min-h-screen {
+  background:
+    radial-gradient(ellipse 60% 30% at 50% 0%, rgba(139,92,246,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 25% at 50% 100%, rgba(251,191,36,0.07) 0%, transparent 55%),
+    linear-gradient(180deg, #f4f2ef 0%, #f0eeeb 60%, #ece9e4 100%) !important;
+}
+
+/* ─── Fundo das sub-páginas (ferramentas, imbuimentos etc) ── */
+[data-theme="light"] main.relative.min-h-screen.text-white {
+  background: #f0eeeb !important;
+}
+
+/* ─── Oculta orbs, auroras e estrelas ───────────────────────── */
+[data-theme="light"] .orb-1,
+[data-theme="light"] .orb-2,
+[data-theme="light"] .orb-3,
+[data-theme="light"] .orb-4,
+[data-theme="light"] .aurora-1,
+[data-theme="light"] .aurora-2,
+[data-theme="light"] .star { opacity: 0 !important; }
+
+/* ─── Override global: qualquer elemento com bg escuro via inline */
+[data-theme="light"] [style*="background"][style*="#111118"],
+[data-theme="light"] [style*="background"][style*="#1a1a24"],
+[data-theme="light"] [style*="background"][style*="#0d0d14"],
+[data-theme="light"] [style*="background"][style*="#0a0a10"] {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.07) !important;
+}
+
+/* ─── TEXTO ─────────────────────────────────────────────────── */
+[data-theme="light"] .text-white           { color: #1c1a26 !important; }
+[data-theme="light"] .text-zinc-100        { color: #2e2b3a !important; }
+[data-theme="light"] .text-zinc-200        { color: #3d3a50 !important; }
+[data-theme="light"] .text-zinc-300        { color: #4a4860 !important; }
+[data-theme="light"] .text-zinc-400        { color: #6b6880 !important; }
+[data-theme="light"] .text-zinc-500        { color: #87849a !important; }
+[data-theme="light"] .text-zinc-600        { color: #9996ae !important; }
+[data-theme="light"] .text-zinc-700        { color: #aeabbf !important; }
+
+/* títulos coloridos */
+[data-theme="light"] .text-amber-400       { color: #6d28d9 !important; }
+[data-theme="light"] .text-amber-300       { color: #7c3aed !important; }
+[data-theme="light"] .text-amber-200       { color: #5b21b6 !important; }
+[data-theme="light"] .text-amber-100       { color: #4c1d95 !important; }
+[data-theme="light"] .text-\[#ffd86b\]     { color: #5b21b6 !important; }
+[data-theme="light"] .text-\[#ffd84d\]     { color: #6d28d9 !important; }
+
+/* links e labels */
+[data-theme="light"] .text-sky-200         { color: #1d4ed8 !important; }
+[data-theme="light"] .text-emerald-100     { color: #065f46 !important; }
+[data-theme="light"] .text-emerald-200     { color: #047857 !important; }
+[data-theme="light"] .text-violet-200      { color: #5b21b6 !important; }
+[data-theme="light"] .text-violet-100      { color: #4c1d95 !important; }
+[data-theme="light"] .text-cyan-200        { color: #0e7490 !important; }
+[data-theme="light"] .text-rose-400        { color: #b91c1c !important; }
+[data-theme="light"] .text-red-300         { color: #b91c1c !important; }
+[data-theme="light"] .text-red-200         { color: #991b1b !important; }
+[data-theme="light"] .text-\[#a78bfa\]     { color: #6d28d9 !important; }
+
+/* acento/destaque dos headers */
+[data-theme="light"] span[style*="color: #a78bfa"],
+[data-theme="light"] span[style*="color:#a78bfa"] { color: #6d28d9 !important; }
+
+/* ─── FUNDOS ESCUROS via Tailwind classes ──────────────────── */
+/* Botões fixos top */
+[data-theme="light"] .bg-black\/35,
+[data-theme="light"] .bg-black\/45,
+[data-theme="light"] .bg-black\/65 {
+  background: rgba(255,255,255,0.92) !important;
+  color: #1c1a26 !important;
+  border: 1px solid rgba(0,0,0,0.09) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08) !important;
+}
+
+[data-theme="light"] .bg-black\/15,
+[data-theme="light"] .bg-black\/10,
+[data-theme="light"] .bg-black\/20 {
+  background: #f7f6f3 !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+/* Cards genéricos escuros */
+[data-theme="light"] .bg-white\/\[0\.02\],
+[data-theme="light"] .bg-white\/\[0\.03\],
+[data-theme="light"] .bg-white\/\[0\.04\],
+[data-theme="light"] .bg-white\/5,
+[data-theme="light"] .bg-white\/\[0\.04\] {
+  background: #f7f6f3 !important;
+  border-color: rgba(0,0,0,0.06) !important;
+}
+
+/* Inputs / textareas */
+[data-theme="light"] .bg-\[\#081126\]\/95,
+[data-theme="light"] .bg-\[\#0f1728\],
+[data-theme="light"] .bg-\[\#0b1220\],
+[data-theme="light"] .bg-\[\#0b1731\],
+[data-theme="light"] .bg-\[\#111b2e\],
+[data-theme="light"] .bg-\[\#0c1730\] {
+  background: #f0efed !important;
+  color: #1c1a26 !important;
+  border: 1px solid rgba(0,0,0,0.09) !important;
+}
+
+/* Gradientes de card escuro */
+[data-theme="light"] [class*="bg-[linear-gradient"],
+[data-theme="light"] [class*="bg-[radial-gradient"] {
+  background: #ffffff !important;
+}
+
+/* ─── BORDAS ─────────────────────────────────────────────────── */
+[data-theme="light"] .border-white\/10,
+[data-theme="light"] .border-white\/\[0\.06\],
+[data-theme="light"] .border-white\/\[0\.04\],
+[data-theme="light"] .border-white\/8,
+[data-theme="light"] .border-white\/5 {
+  border-color: rgba(0,0,0,0.08) !important;
+}
+
+[data-theme="light"] .border-white\/20   { border-color: rgba(0,0,0,0.12) !important; }
+[data-theme="light"] .border-amber-300\/30 { border-color: rgba(109,40,217,0.2) !important; }
+[data-theme="light"] .border-amber-400\/15 { border-color: rgba(109,40,217,0.12) !important; }
+
+/* ─── SOMBRAS ────────────────────────────────────────────────── */
+[data-theme="light"] [class*="shadow-[0_"] {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 4px 16px rgba(0,0,0,0.05) !important;
+}
+
+/* ─── BOTÕES FIXOS (menu + login) ───────────────────────────── */
+[data-theme="light"] .fixed.left-2 > div > button,
+[data-theme="light"] .fixed.right-2 > div > button,
+[data-theme="light"] .fixed.left-3 > div > button,
+[data-theme="light"] .fixed.right-3 > div > button,
+[data-theme="light"] .fixed.left-4 > div > button,
+[data-theme="light"] .fixed.right-4 > div > button {
+  background: rgba(255,255,255,0.92) !important;
+  color: #1c1a26 !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07) !important;
+}
+
+/* ─── DROPDOWNS (menu + usuário) ────────────────────────────── */
+[data-theme="light"] .fixed .absolute[class*="rounded-[20px]"],
+[data-theme="light"] .fixed .absolute.rounded-\[20px\] {
+  background: rgba(255,255,255,0.97) !important;
+  border: 1px solid rgba(0,0,0,0.09) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+}
+
+[data-theme="light"] .fixed .absolute .group\/item {
+  color: #1c1a26 !important;
+}
+
+/* seta do balão do dropdown */
+[data-theme="light"] .fixed .absolute.-top-2 {
+  background: rgba(255,255,255,0.97) !important;
+  border-color: rgba(0,0,0,0.09) !important;
+}
+
+/* ─── HOME: CARDS DE SERVICE ────────────────────────────────── */
+[data-theme="light"] button.rounded-\[24px\].border,
+[data-theme="light"] .rounded-\[24px\].border.bg-black\/45 {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.08) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05), 0 6px 20px rgba(0,0,0,0.04) !important;
+}
+
+/* gradiente dos glows dos service cards */
+[data-theme="light"] button.rounded-\[24px\] .absolute.inset-0 {
+  opacity: 0.25 !important;
+}
+
+/* ─── CALENDÁRIO ─────────────────────────────────────────────── */
+[data-theme="light"] .rounded-\[18px\].bg-\[radial-gradient\(circle_at_top,rgba\(20\,30\,58\,0\.42\) {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+}
+
+[data-theme="light"] .rounded-\[16px\].bg-\[#061121\]\/72,
+[data-theme="light"] [class*="bg-[#061121]"] { background: #f7f6f3 !important; }
+
+[data-theme="light"] .rounded-\[12px\].bg-\[#040d1b\]\/72,
+[data-theme="light"] [class*="bg-[#040d1b]"] {
+  background: #ffffff !important;
+  color: #1c1a26 !important;
+}
+
+/* dias do calendário */
+[data-theme="light"] .h-\[48px\].rounded-\[13px\].border[class*="bg-[#121d31]"],
+[data-theme="light"] .h-\[48px\].rounded-\[13px\].border[class*="bg-[#152238]"] {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.1) !important;
+  color: #1c1a26 !important;
+}
+
+[data-theme="light"] .h-\[48px\].rounded-\[13px\].border[class*="bg-[#111827]"] {
+  background: #e9e8e5 !important;
+  color: #b0adbf !important;
+}
+
+/* hora slots */
+[data-theme="light"] .h-\[42px\].rounded-\[12px\].border[class*="bg-[#131d2d]"] {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.1) !important;
+  color: #1c1a26 !important;
+}
+
+/* ─── INPUTS E TEXTAREAS ─────────────────────────────────────── */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background: #f0efed !important;
+  color: #1c1a26 !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  background: #f7f6f3 !important;
+  border-color: rgba(109,40,217,0.3) !important;
+  outline: none !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder { color: #a09dba !important; }
+
+/* ─── DROPDOWN INTERNO (vocação, mundo) ─────────────────────── */
+[data-theme="light"] .absolute.rounded-\[18px\][class*="bg-[linear-gradient"],
+[data-theme="light"] .absolute.z-50.rounded-\[18px\] {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.1) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.1) !important;
+}
+
+/* ─── BADGES / PILLS ─────────────────────────────────────────── */
+[data-theme="light"] .rounded-full.bg-amber-400\/10  { background: rgba(109,40,217,0.08) !important; color: #5b21b6 !important; }
+[data-theme="light"] .rounded-full.bg-amber-300\/10  { background: rgba(109,40,217,0.08) !important; color: #5b21b6 !important; }
+[data-theme="light"] .rounded-full.bg-emerald-400\/10{ background: rgba(5,150,105,0.08)   !important; color: #065f46 !important; }
+[data-theme="light"] .rounded-full.bg-cyan-400\/10   { background: rgba(6,182,212,0.08)   !important; color: #0e7490 !important; }
+[data-theme="light"] .rounded-full.bg-sky-400\/10    { background: rgba(14,165,233,0.08)  !important; color: #0369a1 !important; }
+[data-theme="light"] .rounded-full.bg-white\/\[0\.04\],
+[data-theme="light"] .rounded-full.bg-white\/5       { background: rgba(0,0,0,0.05)       !important; color: #4a4860 !important; }
+[data-theme="light"] .rounded-full.bg-violet-400\/10 { background: rgba(109,40,217,0.08)  !important; color: #5b21b6 !important; }
+[data-theme="light"] [class*="bg-[#0d1730]"]         { background: #eeecf0                !important; color: #4a4860 !important; }
+
+/* ─── BOTÕES DE AÇÃO PRINCIPAIS ──────────────────────────────── */
+/* Botão amarelo/amber vira roxo no light */
+[data-theme="light"] .bg-\[linear-gradient\(180deg\,\#ffd84d\,\#facc15\)\],
+[data-theme="light"] .bg-\[linear-gradient\(180deg\,#ffd84d\,#facc15\)\] {
+  background: linear-gradient(180deg, #7c3aed, #6d28d9) !important;
+  color: #ffffff !important;
+}
+
+/* Botões secundários */
+[data-theme="light"] .bg-white\/\[0\.03\] { background: #f0efed !important; }
+
+/* ─── SEÇÕES / ABAS (sobre, agenda, regras, etc) ─────────────── */
+[data-theme="light"] .rounded-\[30px\],
+[data-theme="light"] .rounded-\[28px\],
+[data-theme="light"] .rounded-\[34px\] {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.07) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.04) !important;
+}
+
+/* Sub-cards dentro dessas seções */
+[data-theme="light"] .rounded-\[22px\] {
+  background: #f7f6f3 !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+[data-theme="light"] .rounded-\[18px\]:not(input):not(button):not(label):not(a) {
+  background: #f7f6f3 !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+}
+
+/* ─── TERMOS (cláusulas) ─────────────────────────────────────── */
+[data-theme="light"] .rounded-\[26px\].border {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.07) !important;
+}
+
+[data-theme="light"] h3.text-amber-400,
+[data-theme="light"] h3[class*="text-amber"] { color: #5b21b6 !important; }
+
+[data-theme="light"] .text-yellow-300 { color: #6d28d9 !important; }
+[data-theme="light"] .text-cyan-300   { color: #0e7490 !important; }
+[data-theme="light"] .text-emerald-400{ color: #047857 !important; }
+
+/* ─── FEEDBACKS ──────────────────────────────────────────────── */
+[data-theme="light"] article.rounded-\[28px\] {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.07) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04) !important;
+}
+
+/* ─── CHECKOUT / PAYMENT ─────────────────────────────────────── */
+[data-theme="light"] .overflow-hidden.rounded-\[30px\] { background: #ffffff !important; }
+[data-theme="light"] .bg-black\/20.px-5.py-4           { background: #f0efed !important; border-bottom: 1px solid rgba(0,0,0,0.08) !important; }
+
+/* Painel de pagamento */
+[data-theme="light"] .rounded-\[26px\].p-5,
+[data-theme="light"] .rounded-\[26px\].p-6 {
+  background: #f7f6f3 !important;
+  border: 1px solid rgba(0,0,0,0.07) !important;
+}
+
+/* ─── FERRAMENTAS HUB (page.tsx de /ferramentas) ─────────────── */
+/* Cards da grade de ferramentas */
+[data-theme="light"] .rounded-xl { background: #ffffff !important; }
+
+[data-theme="light"] [class*="bg-[#1a1a24]"],
+[data-theme="light"] [class*="bg-[#111118]"] {
+  background: #ffffff !important;
+}
+
+/* ─── IMBUIMENTOS PAGE ───────────────────────────────────────── */
+/* Grid cards */
+[data-theme="light"] .rounded-xl.px-4.py-3 {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04) !important;
+}
+
+/* Ícones dos imbuimentos */
+[data-theme="light"] .rounded-xl.overflow-hidden[class*="bg-white/0.04"],
+[data-theme="light"] .flex.h-12.w-12.shrink-0 {
+  background: #f0efed !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+}
+
+/* Modal dos imbuimentos */
+[data-theme="light"] .rounded-2xl[style*="background"] {
+  background: #ffffff !important;
+}
+
+[data-theme="light"] .rounded-\[14px\].padding-\[16px\],
+[data-theme="light"] div[style*="#111118"] {
+  background: #f7f6f3 !important;
+}
+
+/* Tier cards no modal */
+[data-theme="light"] div[style*="borderRadius: 14"][style*="background: '#111118'"] {
+  background: #f7f6f3 !important;
+}
+
+/* Slots de input dos recursos */
+[data-theme="light"] div[style*="borderRadius: 12"] {
+  background: #f0efed !important;
+  border-color: rgba(0,0,0,0.09) !important;
+}
+
+/* ─── DIVIDERS ───────────────────────────────────────────────── */
+[data-theme="light"] .border-t.border-white\/8,
+[data-theme="light"] .h-px { border-color: rgba(0,0,0,0.08) !important; background: rgba(0,0,0,0.08) !important; }
+
+/* ─── SCROLLBAR ──────────────────────────────────────────────── */
+[data-theme="light"] ::-webkit-scrollbar-track   { background: #f0efed !important; }
+[data-theme="light"] ::-webkit-scrollbar-thumb   { background: rgba(0,0,0,0.15) !important; border-radius: 99px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25) !important; }
+
+/* ─── ON RUBINOT label ────────────────────────────────────────── */
+[data-theme="light"] [class*="tracking-[0.45em]"],
+[data-theme="light"] [class*="tracking-[0.34em]"],
+[data-theme="light"] [class*="tracking-[0.4em]"] { color: #8b5cf6 !important; opacity: 0.9; }
+
+/* ─── Overlays com pointer-events-none absolute ──────────────── */
+[data-theme="light"] .pointer-events-none.absolute.inset-0:not(.z-0) { opacity: 0 !important; }
+
+/* ─── Mensagem de sucesso (topo) ─────────────────────────────── */
+[data-theme="light"] .fixed.top-4.left-1\/2 {
+  background: rgba(240,253,244,0.97) !important;
+  color: #14532d !important;
+  border-color: rgba(34,197,94,0.25) !important;
+}
+
+/* ─── Auth page ──────────────────────────────────────────────── */
+[data-theme="light"] .rounded-\[30px\].backdrop-blur-md {
+  background: #ffffff !important;
+}
+
+/* Tab de login/registro */
+[data-theme="light"] .rounded-full.bg-white\/\[0\.03\].p-1 {
+  background: #eeecf0 !important;
+}
+
+/* ─── Imbuimentos inline styles override ────────────────────── */
+[data-theme="light"] [style*="background: '#1a1a24'"],
+[data-theme="light"] [style*="background:'#1a1a24'"],
+[data-theme="light"] [style*="background: '#111118'"],
+[data-theme="light"] [style*="background:'#111118'"],
+[data-theme="light"] [style*="background: '#0d0d14'"],
+[data-theme="light"] [style*="background:'#0a0a10'"] {
+  background: #ffffff !important;
+}
+
+/* ─── Tooltip dos imbuimentos ────────────────────────────────── */
+[data-theme="light"] [style*="background: '#0a0a10'"],
+[data-theme="light"] [style*="background: #0a0a10"] {
+  background: #ffffff !important;
+  border-color: rgba(0,0,0,0.09) !important;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1) !important;
+}
+
+/* ─── Backdrop do modal ──────────────────────────────────────── */
+[data-theme="light"] .fixed.inset-0.z-50.flex[style*="rgba(0,0,0,0.75)"] {
+  background: rgba(15,10,30,0.5) !important;
+}
+

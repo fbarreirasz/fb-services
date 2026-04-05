@@ -1,14 +1,21 @@
 'use client';
 
-const sliderCSS = `
-  .calc-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: #1e293b; outline: none; }
-  .calc-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #c026d3); cursor: pointer; border: 2px solid #0b1220; box-shadow: 0 0 8px rgba(124,58,237,0.5); }
-  .calc-range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, #7c3aed, #c026d3); cursor: pointer; border: 2px solid #0b1220; }
-  .calc-range::-webkit-slider-runnable-track { height: 4px; border-radius: 9999px; }
-`;
-
 import { useState } from 'react';
 
+// ─── design tokens — idênticos ao skills / stamina / loot-split ─
+const BG     = '#111118';
+const CARD   = '#1a1a24';
+const BORDER = 'rgba(255,255,255,0.07)';
+const PURPLE = '#a78bfa';
+
+// ─── slider CSS ─────────────────────────────────────────────────
+const sliderCSS = `
+  .calc-range { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 9999px; background: #0d0d14; outline: none; }
+  .calc-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; border-radius: 50%; background: ${PURPLE}; cursor: pointer; border: 2px solid #111118; box-shadow: 0 0 8px rgba(167,139,250,0.4); }
+  .calc-range::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: ${PURPLE}; cursor: pointer; border: 2px solid #111118; }
+`;
+
+// ─── rates RubinOT ───────────────────────────────────────────────
 const RATES = [
   { f: 1,    t: 8,    r: 50   },
   { f: 9,    t: 50,   r: 80   },
@@ -28,13 +35,8 @@ const RATES = [
   { f: 1401, t: 9999, r: 1.2  },
 ];
 
-function getRate(n: number) {
-  return RATES.find((s) => n >= s.f && n <= s.t)?.r ?? 1.2;
-}
-
-function xpLvl(n: number) {
-  return 50 * n * n - 50 * n + 100;
-}
+function getRate(n: number) { return RATES.find(s => n >= s.f && n <= s.t)?.r ?? 1.2; }
+function xpLvl(n: number)   { return 50 * n * n - 50 * n + 100; }
 
 function fkk(n: number) {
   if (n >= 1e9) return (n / 1e9).toFixed(2) + 'bi';
@@ -42,7 +44,6 @@ function fkk(n: number) {
   if (n >= 1e3) return (n / 1e3).toFixed(0) + 'k';
   return Math.round(n).toString();
 }
-
 function fH(h: number) {
   if (h <= 0) return '0min';
   if (h < 1 / 60) return '<1 min';
@@ -52,67 +53,66 @@ function fH(h: number) {
   if (d === 0) return h.toFixed(1) + 'h';
   return `${d}d ${r.toFixed(0)}h`;
 }
-
-function fDays(h: number) {
-  return h < 24 ? h.toFixed(1) + 'h total' : (h / 24).toFixed(1) + ' dias';
-}
+function fDays(h: number) { return h < 24 ? h.toFixed(1) + 'h total' : (h / 24).toFixed(1) + ' dias'; }
 
 type BreakdownItem = { label: string; xp: number; h: number };
-
-type CalcResult = {
-  totalH: number;
-  totalSess: number;
-  totalXp: number;
-  breakdown: BreakdownItem[];
-};
+type CalcResult    = { totalH: number; totalSess: number; totalXp: number; breakdown: BreakdownItem[] };
 
 const MAX_SESS = 3;
 
+// ─── small reusable checkbox ─────────────────────────────────────
+function Checkbox({ checked, onChange, label, sub }: { checked: boolean; onChange: () => void; label: string; sub: string }) {
+  return (
+    <div onClick={onChange} className="flex cursor-pointer items-center gap-3 rounded-xl px-4 py-3 transition-colors"
+      style={{ border: `1px solid ${checked ? 'rgba(167,139,250,0.35)' : BORDER}`, background: checked ? 'rgba(167,139,250,0.07)' : 'rgba(255,255,255,0.02)' }}>
+      <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md"
+        style={{ border: `2px solid ${checked ? PURPLE : 'rgba(255,255,255,0.18)'}`, background: checked ? PURPLE : 'transparent' }}>
+        {checked && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="#000" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
+      </div>
+      <div className="flex-1">
+        <p className="text-sm font-semibold" style={{ color: checked ? PURPLE : '#d1d5db' }}>{label}</p>
+        <p className="text-[11px] text-zinc-600">{sub}</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── input helper ────────────────────────────────────────────────
+const inputCls = "h-11 w-full rounded-xl bg-transparent px-4 text-sm text-white outline-none transition";
+const inputStyle = { border: `1px solid ${BORDER}`, background: '#0d0d14' };
+
 export default function CalculadoraPage() {
   const [levelFrom, setLevelFrom] = useState(958);
-  const [levelTo, setLevelTo]     = useState(1000);
-  const [mode, setMode]           = useState<'xp' | 'pct'>('xp');
-  const [xpExact, setXpExact]     = useState(3239355);
-  const [pct, setPct]             = useState(8);
-  const [rawKK, setRawKK]         = useState(1);
-  const [hSess, setHSess]         = useState(2);
-  const [hasStam, setHasStam]     = useState(true);
-  const [hasStore, setHasStore]   = useState(false);
-  const [result, setResult]       = useState<CalcResult | null>(null);
-  const [error, setError]         = useState('');
+  const [levelTo,   setLevelTo]   = useState(1000);
+  const [mode,      setMode]      = useState<'xp' | 'pct'>('xp');
+  const [xpExact,   setXpExact]   = useState(3239355);
+  const [pct,       setPct]       = useState(8);
+  const [rawKK,     setRawKK]     = useState(1);
+  const [hSess,     setHSess]     = useState(2);
+  const [hasStam,   setHasStam]   = useState(true);
+  const [hasStore,  setHasStore]  = useState(false);
+  const [result,    setResult]    = useState<CalcResult | null>(null);
+  const [error,     setError]     = useState('');
 
   const totalLevelXp = xpLvl(levelFrom);
-  const xpPreviewPct = mode === 'xp' && xpExact > 0
-    ? ((xpExact / totalLevelXp) * 100).toFixed(1)
-    : null;
-
-  const currentRate = getRate(levelFrom);
-
-  // stamFrac: fração da sessão coberta pela stamina (renova todo dia)
-  // hSess limitado a MAX_SESS, então stamFrac é sempre min(3, hSess) / hSess
-  const stamFrac  = hasStam ? Math.min(MAX_SESS, hSess) / hSess : 0;
-  const boostMult = hasStore ? 1.5 : 1.0;
-  // Multiplicador efetivo médio por hora de sessão
-  const sessEffMult = (1 + 0.5 * stamFrac) * boostMult;
+  const xpPreviewPct = mode === 'xp' && xpExact > 0 ? ((xpExact / totalLevelXp) * 100).toFixed(1) : null;
+  const currentRate  = getRate(levelFrom);
+  const stamFrac     = hasStam ? Math.min(MAX_SESS, hSess) / hSess : 0;
+  const boostMult    = hasStore ? 1.5 : 1.0;
+  const sessEffMult  = (1 + 0.5 * stamFrac) * boostMult;
 
   const multLabel = (() => {
     const stamH = Math.min(MAX_SESS, hSess);
     const parts: string[] = [`${currentRate}`];
     if (hasStore) parts.push('× 1.5');
     if (hasStam) {
-      if (stamH === hSess) {
-        parts.push('× 1.5');
-      } else {
-        parts.push(`× 1.5 (stam, ${stamH}h de ${hSess}h/sessão)`);
-      }
+      parts.push(stamH === hSess ? '× 1.5' : `× 1.5 (stam, ${stamH}h de ${hSess}h/sessão)`);
     }
     return parts.join(' ') + ` = ${(currentRate * sessEffMult).toFixed(2)}x efetivo`;
   })();
 
   function calcular() {
-    setError('');
-    setResult(null);
-
+    setError(''); setResult(null);
     if (!levelFrom || !levelTo || levelFrom >= levelTo) { setError('Level desejado deve ser maior que o atual.'); return; }
     if (!rawKK || rawKK <= 0) { setError('Informe o raw XP/h.'); return; }
     if (levelFrom < 1 || levelTo > 2000) { setError('Level entre 1 e 2000.'); return; }
@@ -125,11 +125,7 @@ export default function CalculadoraPage() {
     }
 
     const rawPH = rawKK * 1e6;
-
-    function timeForXP(xp: number, rate: number) {
-      return xp / (rawPH * rate * sessEffMult);
-    }
-
+    const timeForXP = (xp: number, rate: number) => xp / (rawPH * rate * sessEffMult);
     const pctLabel = mode === 'xp'
       ? `${((xpCurRemaining / xpLvl(levelFrom)) * 100).toFixed(1)}% restante`
       : `${Math.round(pct)}% restante`;
@@ -155,75 +151,85 @@ export default function CalculadoraPage() {
       breakdown.push({ label: `Lv ${s.lf}–${s.lt} · ${s.r}x`, xp: s.xp, h });
     }
 
-    const totalSess = Math.ceil(totalH / hSess);
-    const totalXp = breakdown.reduce((a, b) => a + b.xp, 0);
-    setResult({ totalH, totalSess, totalXp, breakdown });
+    setResult({ totalH, totalSess: Math.ceil(totalH / hSess), totalXp: breakdown.reduce((a, b) => a + b.xp, 0), breakdown });
   }
 
   return (
     <>
       <style>{sliderCSS}</style>
-      <main className="relative min-h-screen overflow-hidden text-white"
-        style={{
-          background: 'radial-gradient(circle at 50% 14%, rgba(205,215,255,0.10) 0%, transparent 18%), radial-gradient(circle at 52% 18%, rgba(168,140,255,0.25) 0%, rgba(168,140,255,0.08) 14%, transparent 30%), linear-gradient(to bottom, #09101f 0%, #050b17 42%, #040814 72%, #030611 100%)',
-        }}
-      >
-        <div className="orb-1 pointer-events-none absolute left-[-10%] top-[8%] z-0 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-[80px]" />
-        <div className="orb-2 pointer-events-none absolute right-[-8%] top-[5%] z-0 h-[30rem] w-[30rem] rounded-full bg-fuchsia-500/15 blur-[90px]" />
-        <div className="orb-4 pointer-events-none absolute right-[15%] bottom-[10%] z-0 h-[24rem] w-[24rem] rounded-full bg-indigo-500/14 blur-[80px]" />
+      <main className="relative min-h-screen text-white" style={{ background: BG }}>
 
-        <div className="relative z-10 mx-auto max-w-2xl px-4 py-12">
+        {/* glow */}
+        <div className="pointer-events-none fixed inset-0"
+          style={{ backgroundImage: 'radial-gradient(ellipse 70% 35% at 50% 0%, rgba(124,58,237,0.08) 0%, transparent 70%)' }} />
+
+        <div className="relative z-10 mx-auto max-w-2xl px-4 py-10">
+
+          {/* ── Header ── */}
           <div className="mb-8 text-center">
-            <button
-              onClick={() => (window.location.href = '/ferramentas')}
-              className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-400 backdrop-blur-md transition hover:text-white"
-            >
+            <button onClick={() => (window.location.href = '/ferramentas')}
+              className="mb-5 inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-zinc-500 transition hover:text-white"
+              style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.03)' }}>
               ← Ferramentas
             </button>
-            <p className="text-xs uppercase tracking-[0.45em] text-violet-400">On RubinOT</p>
-            <h1 className="mt-2 text-4xl font-black tracking-[0.1em] text-amber-400">
-              Calculadora de XP
+            <p className="text-xs uppercase tracking-[0.4em]" style={{ color: 'rgba(167,139,250,0.6)' }}>FB Services</p>
+            <h1 className="mt-1 text-3xl font-black text-white">
+              Calculadora de <span style={{ color: PURPLE }}>Experiência</span>
             </h1>
-            <p className="mx-auto mt-3 max-w-md text-sm text-zinc-400">
+            <p className="mt-2 text-sm text-zinc-500">
               Estime quantas horas de hunt você precisa para atingir seu level desejado no RubinOT.
             </p>
           </div>
 
-          <div className="rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
+          {/* ── Form card ── */}
+          <div className="rounded-2xl p-5" style={{ border: `1px solid ${BORDER}`, background: CARD }}>
 
+            {/* Levels */}
             <div className="mb-5 grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Level atual</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">Level atual</label>
                 <input type="number" value={levelFrom} min={1} max={1999}
-                  onChange={(e) => setLevelFrom(Number(e.target.value))}
-                  className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50" />
+                  onChange={e => setLevelFrom(Number(e.target.value))}
+                  className={inputCls} style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.4)')}
+                  onBlur={e  => (e.target.style.borderColor = BORDER)} />
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Level desejado</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">Level desejado</label>
                 <input type="number" value={levelTo} min={2} max={2000}
-                  onChange={(e) => setLevelTo(Number(e.target.value))}
-                  className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50" />
+                  onChange={e => setLevelTo(Number(e.target.value))}
+                  className={inputCls} style={{ ...inputStyle, color: PURPLE, borderColor: 'rgba(167,139,250,0.3)' }}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.5)')}
+                  onBlur={e  => (e.target.style.borderColor = 'rgba(167,139,250,0.3)')} />
               </div>
             </div>
 
+            {/* XP restante */}
             <div className="mb-5">
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">XP restante no level atual</label>
-              <div className="mb-2 flex gap-2">
-                {(['xp', 'pct'] as const).map((m) => (
+              <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">XP restante no level atual</label>
+              <div className="mb-3 flex gap-2">
+                {(['xp', 'pct'] as const).map(m => (
                   <button key={m} onClick={() => setMode(m)}
-                    className={`flex-1 rounded-xl py-2 text-xs font-semibold transition ${mode === m ? 'bg-violet-600/30 text-violet-300 border border-violet-500/40' : 'border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10'}`}>
-                    {m === 'xp' ? 'XP (Valor)' : 'XP (Porcentagem)'}
+                    className="flex-1 rounded-lg py-2 text-xs font-bold uppercase tracking-wide transition"
+                    style={{
+                      background: mode === m ? PURPLE : 'rgba(255,255,255,0.04)',
+                      color: mode === m ? '#000' : '#6b7280',
+                      border: mode === m ? 'none' : `1px solid ${BORDER}`,
+                    }}>
+                    {m === 'xp' ? 'XP (Valor)' : 'XP (%)'}
                   </button>
                 ))}
               </div>
               {mode === 'xp' ? (
                 <div>
                   <input type="number" value={xpExact} min={1}
-                    onChange={(e) => setXpExact(Number(e.target.value))}
-                    className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50" />
+                    onChange={e => setXpExact(Number(e.target.value))}
+                    className={inputCls} style={inputStyle}
+                    onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.4)')}
+                    onBlur={e  => (e.target.style.borderColor = BORDER)} />
                   {xpPreviewPct && (
-                    <p className="mt-1 text-xs text-zinc-500">
-                      ≈ {xpPreviewPct}% do level {levelFrom} · total do level: {totalLevelXp.toLocaleString('pt-BR')} XP
+                    <p className="mt-1.5 text-[11px] text-zinc-600">
+                      ≈ {xpPreviewPct}% do level {levelFrom} · total: {totalLevelXp.toLocaleString('pt-BR')} XP
                     </p>
                   )}
                 </div>
@@ -231,54 +237,46 @@ export default function CalculadoraPage() {
                 <div>
                   <div className="flex items-center gap-3">
                     <input type="range" min={1} max={100} value={pct}
-                      onChange={(e) => setPct(Number(e.target.value))}
+                      onChange={e => setPct(Number(e.target.value))}
                       className="calc-range flex-1" />
-                    <span className="min-w-[44px] text-right text-sm text-white">{pct}%</span>
+                    <span className="min-w-[44px] text-right text-sm font-black" style={{ color: PURPLE }}>{pct}%</span>
                   </div>
-                  <p className="mt-1 text-[11px] text-zinc-500">Selecione a % referente a quanto falta para o próximo level.</p>
+                  <p className="mt-1.5 text-[11px] text-zinc-600">Selecione a % referente a quanto falta para o próximo level.</p>
                 </div>
               )}
             </div>
 
+            {/* Raw XP + horas */}
             <div className="mb-5 grid grid-cols-2 gap-4">
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Raw XP/hora</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">Raw XP/hora</label>
                 <input type="number" value={rawKK} min={0.01} step={0.1}
-                  onChange={(e) => setRawKK(Number(e.target.value))}
-                  className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50" />
-                <p className="mt-1 text-[11px] text-zinc-500">Ex: 5 = 5kk/h · 5.5 = 5.5kk/h</p>
+                  onChange={e => setRawKK(Number(e.target.value))}
+                  className={inputCls} style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.4)')}
+                  onBlur={e  => (e.target.style.borderColor = BORDER)} />
+                <p className="mt-1.5 text-[11px] text-zinc-600">Ex: 5 = 5kk/h · 5.5 = 5.5kk/h</p>
               </div>
               <div>
-                <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-zinc-400">Horas por dia</label>
+                <label className="mb-2 block text-[10px] font-bold uppercase tracking-widest text-zinc-600">Horas por dia</label>
                 <input type="number" value={hSess} min={0.5} max={MAX_SESS} step={0.5}
-                  onChange={(e) => setHSess(Math.min(MAX_SESS, Math.max(0.5, Number(e.target.value))))}
-                  className="h-11 w-full rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none focus:border-violet-500/50" />
-                <p className="mt-1 text-[11px] text-zinc-500">Limitado a 3h (duração da stamina)</p>
+                  onChange={e => setHSess(Math.min(MAX_SESS, Math.max(0.5, Number(e.target.value))))}
+                  className={inputCls} style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(167,139,250,0.4)')}
+                  onBlur={e  => (e.target.style.borderColor = BORDER)} />
+                <p className="mt-1.5 text-[11px] text-zinc-600">Limitado a 3h (duração da stamina)</p>
               </div>
             </div>
 
-            <div className="mb-5 rounded-2xl border border-white/10 bg-white/5 p-4 flex flex-col gap-3">
-              <label className="flex cursor-pointer items-center gap-3">
-                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${hasStam ? 'border-violet-500 bg-violet-600' : 'border-white/20 bg-white/5'}`}
-                  onClick={() => setHasStam(!hasStam)} style={{cursor:'pointer'}}>
-                  {hasStam && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <span className="text-sm text-zinc-300">
-                  Stamina bonus <span className="text-zinc-500">(1.5x)</span>
-                </span>
-              </label>
-              <label className="flex cursor-pointer items-center gap-3">
-                <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition ${hasStore ? 'border-amber-400 bg-amber-500' : 'border-white/20 bg-white/5'}`}
-                  onClick={() => setHasStore(!hasStore)} style={{cursor:'pointer'}}>
-                  {hasStore && <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L4 7L9 1" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <span className="text-sm text-zinc-300">
-                  Boosts <span className="text-zinc-500">(+50%)</span>
-                </span>
-              </label>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs text-zinc-500">Multiplicador para level {levelFrom}:</span>
-                <span className="rounded-full bg-violet-500/20 px-3 py-0.5 text-xs font-semibold text-violet-300">
+            {/* Checkboxes + multiplicador */}
+            <div className="mb-5 flex flex-col gap-2">
+              <Checkbox checked={hasStam}  onChange={() => setHasStam(!hasStam)}   label="Stamina bonus" sub="Multiplicador 1.5x nas primeiras 3h" />
+              <Checkbox checked={hasStore} onChange={() => setHasStore(!hasStore)} label="Boosts" sub="Store boost +50%" />
+              <div className="flex flex-wrap items-center gap-2 rounded-xl px-4 py-3"
+                style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
+                <span className="text-[11px] text-zinc-500">Multiplicador para level {levelFrom}:</span>
+                <span className="rounded-full px-3 py-0.5 text-[11px] font-semibold"
+                  style={{ background: 'rgba(167,139,250,0.12)', color: PURPLE }}>
                   {multLabel}
                 </span>
               </div>
@@ -287,67 +285,74 @@ export default function CalculadoraPage() {
             {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
 
             <button onClick={calcular}
-              className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-fuchsia-600 py-3 text-sm font-bold text-white shadow-lg transition hover:opacity-90 active:scale-[0.98]">
+              className="w-full rounded-xl py-3 text-sm font-black text-black transition hover:brightness-110 active:scale-[0.98]"
+              style={{ background: PURPLE }}>
               Calcular
             </button>
           </div>
 
+          {/* ── Results card ── */}
           {result && (
-            <div className="mt-4 rounded-3xl border border-white/10 bg-black/40 p-6 backdrop-blur-md">
-              <div className="mb-5 grid grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-violet-500/20 bg-violet-500/10 p-4">
-                  <p className="text-xs text-violet-300">Tempo estimado</p>
-                  <p className="mt-1 text-2xl font-black text-white">{fH(result.totalH)}</p>
+            <div className="mt-4 rounded-2xl p-5" style={{ border: `1px solid ${BORDER}`, background: CARD }}>
+
+              {/* 4 stat cards */}
+              <div className="mb-4 grid grid-cols-2 gap-3">
+                {/* tempo */}
+                <div className="rounded-xl p-4" style={{ border: `1px solid rgba(167,139,250,0.25)`, background: 'rgba(167,139,250,0.08)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Tempo estimado</p>
+                  <p className="mt-1.5 text-2xl font-black text-white">{fH(result.totalH)}</p>
                 </div>
-                <div className="rounded-2xl border border-violet-500/20 bg-violet-500/10 p-4">
-                  <p className="text-xs text-violet-300">Total</p>
-                  <p className="mt-1 text-2xl font-black text-white">{fDays(result.totalH)}</p>
+                {/* total */}
+                <div className="rounded-xl p-4" style={{ border: `1px solid rgba(167,139,250,0.25)`, background: 'rgba(167,139,250,0.08)' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Total</p>
+                  <p className="mt-1.5 text-2xl font-black text-white">{fDays(result.totalH)}</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="text-xs text-zinc-400">Total de horas</p>
-                  <p className="mt-1 text-2xl font-black text-white">{Math.ceil(result.totalH)}h</p>
-                  <p className="mt-1 text-[11px] text-zinc-500">{result.totalSess} sessões de {hSess}h</p>
+                {/* horas */}
+                <div className="rounded-xl p-4" style={{ border: `1px solid ${BORDER}`, background: '#0d0d14' }}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Total de horas</p>
+                  <p className="mt-1.5 text-2xl font-black text-white">{Math.ceil(result.totalH)}h</p>
+                  <p className="mt-1 text-[11px] text-zinc-600">{result.totalSess} sessões de {hSess}h</p>
                 </div>
+                {/* valor */}
                 {(() => {
                   const hoursRounded = Math.ceil(result.totalH);
-                  const hourRate = hoursRounded <= 14 ? 16 : 14;
+                  const hourRate  = hoursRounded <= 14 ? 16 : 14;
                   const totalPrice = hoursRounded * hourRate;
                   return (
-                    <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                      <p className="text-xs text-emerald-300">Valor estimado</p>
-                      <p className="mt-1 text-2xl font-black text-white">
-                        R$ {totalPrice.toLocaleString('pt-BR')}
-                      </p>
-                      <p className="mt-1 text-[11px] text-zinc-500">
-                        R$ {hourRate}/h · {hoursRounded}h total {hoursRounded <= 14 ? '(até 14h)' : '(acima de 14h)'}
-                      </p>
+                    <div className="rounded-xl p-4" style={{ border: `1px solid rgba(52,211,153,0.25)`, background: 'rgba(52,211,153,0.07)' }}>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-600">Valor estimado</p>
+                      <p className="mt-1.5 text-2xl font-black text-white">R$ {totalPrice.toLocaleString('pt-BR')}</p>
+                      <p className="mt-1 text-[11px] text-zinc-600">R$ {hourRate}/h · {hoursRounded}h {hoursRounded <= 14 ? '(até 14h)' : '(acima de 14h)'}</p>
                     </div>
                   );
                 })()}
               </div>
 
+              {/* nota */}
               {hasStore ? (
-                <div className="mb-5 rounded-2xl border border-sky-500/20 bg-sky-500/10 p-3 text-xs text-sky-300">
+                <div className="mb-4 rounded-xl p-3 text-[11px]"
+                  style={{ border: '1px solid rgba(96,165,250,0.2)', background: 'rgba(96,165,250,0.06)', color: '#93c5fd' }}>
                   Valores aproximados in game, podendo haver divergência nos horários.
                 </div>
               ) : (
-                <div className="mb-5 rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-300">
-                  Cálculo conservador. Ative os toggles acima para ficar mais fiel ao tempo de jogo. O tempo real e valores pode variar conforme vocação, set, disponibilidade das hunts, raw/hora e players online.
+                <div className="mb-4 rounded-xl p-3 text-[11px]"
+                  style={{ border: '1px solid rgba(251,191,36,0.2)', background: 'rgba(251,191,36,0.06)', color: '#fcd34d' }}>
+                  Cálculo conservador. Ative os toggles acima para ficar mais fiel ao tempo de jogo. O tempo real pode variar conforme vocação, set, disponibilidade das hunts, raw/hora e players online.
                 </div>
               )}
 
+              {/* breakdown */}
               {result.breakdown.length > 1 && (
                 <div>
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-zinc-500">
-                    Detalhamento por faixa
-                  </p>
-                  <div className="flex flex-col gap-1">
+                  <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">Detalhamento por faixa</p>
+                  <div className="flex flex-col gap-1.5">
                     {result.breakdown.map((s, i) => (
-                      <div key={i} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-2.5 text-sm">
-                        <span className="text-zinc-400">{s.label}</span>
-                        <span className="font-semibold text-white">
+                      <div key={i} className="flex items-center justify-between rounded-xl px-4 py-2.5"
+                        style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
+                        <span className="text-[12px] text-zinc-400">{s.label}</span>
+                        <span className="text-[12px] font-semibold text-white">
                           {fH(s.h)}{' '}
-                          <span className="text-xs font-normal text-zinc-500">({fkk(s.xp)})</span>
+                          <span className="text-[11px] font-normal text-zinc-600">({fkk(s.xp)})</span>
                         </span>
                       </div>
                     ))}
@@ -357,7 +362,7 @@ export default function CalculadoraPage() {
             </div>
           )}
 
-          <p className="mt-6 text-center text-xs text-zinc-600">
+          <p className="mt-6 text-center text-xs text-zinc-700">
             Cálculo baseado nos rates do RubinOT · XP base do Tibia Global
           </p>
         </div>
