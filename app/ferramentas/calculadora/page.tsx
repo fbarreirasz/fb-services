@@ -175,10 +175,10 @@ export default function CalculadoraPage() {
         <div className="relative z-10 mx-auto max-w-2xl px-4 py-12">
           <div className="mb-8 text-center">
             <button
-              onClick={() => (window.location.href = '/')}
+              onClick={() => (window.location.href = '/ferramentas')}
               className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-4 py-2 text-sm text-zinc-400 backdrop-blur-md transition hover:text-white"
             >
-              ← Voltar
+              ← Ferramentas
             </button>
             <p className="text-xs uppercase tracking-[0.45em] text-violet-400">On RubinOT</p>
             <h1 className="mt-2 text-4xl font-black tracking-[0.1em] text-amber-400">

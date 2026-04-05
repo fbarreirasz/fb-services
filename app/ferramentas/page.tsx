@@ -109,7 +109,7 @@ export default function FerramentasPage() {
                   <span className="font-bold text-white">{tool.label}</span>
                   {!tool.ready && (
                     <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-amber-300">
-                      Em breve
+                      
                     </span>
                   )}
                 </div>
