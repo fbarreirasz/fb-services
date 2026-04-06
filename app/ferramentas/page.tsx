@@ -87,7 +87,7 @@ export default function FerramentasPage() {
           >
             ← Voltar
           </button>
-          <p className="text-xs uppercase tracking-[0.45em] text-violet-400">On RubinOT</p>
+          <p className="text-xs uppercase tracking-[0.45em] text-violet-400">FB Services</p>
           <h1 className="mt-2 text-4xl font-black tracking-[0.1em] text-amber-400">Ferramentas</h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-zinc-400">
             Calculadoras e utilitários para facilitar sua evolução no servidor.

@@ -582,3 +582,190 @@ body {
   background: rgba(15,10,30,0.5) !important;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — adicionar no final do globals.css
+   Cobre todas as páginas: home, ferramentas, skills, stamina,
+   loot-split, imbuimentos, calculadora-xp, bounty-tasks
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── ThemeToggle + botões fixos ────────────────────────── */
+/* No mobile, empilha logo abaixo da navbar ou no canto */
+.fixed-ui-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ─── Base / overflow ────────────────────────────────────── */
+* { box-sizing: border-box; }
+body { overflow-x: hidden; }
+
+/* ─── Tipografia responsiva ──────────────────────────────── */
+@media (max-width: 640px) {
+  h1 { font-size: clamp(1.5rem, 6vw, 2.5rem) !important; }
+  h2 { font-size: clamp(1.25rem, 5vw, 2rem) !important; }
+
+  /* Header da home */
+  .text-4xl  { font-size: clamp(1.6rem, 7vw, 2.25rem) !important; }
+  .text-5xl  { font-size: clamp(2rem,   8vw, 3rem)    !important; }
+  .text-3xl  { font-size: clamp(1.4rem, 5.5vw, 1.875rem) !important; }
+}
+
+/* ─── Layout grid responsivo ─────────────────────────────── */
+@media (max-width: 1024px) {
+  /* Skills, stamina: 2 colunas → 1 */
+  .lg\:grid-cols-\[420px_1fr\]       { grid-template-columns: 1fr !important; }
+  .lg\:grid-cols-2                   { grid-template-columns: 1fr !important; }
+  .lg\:grid-cols-\[1fr_380px\]       { grid-template-columns: 1fr !important; }
+  .lg\:grid-cols-\[1fr_360px\]       { grid-template-columns: 1fr !important; }
+  .lg\:grid-cols-\[600px_1fr\]       { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 768px) {
+  /* Imbuimentos: 4 cols → 2 */
+  .grid-cols-2.sm\:grid-cols-3.lg\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Slots das bounty tasks: força 1 col em telas pequenas */
+  .grid-cols-1.sm\:grid-cols-2.xl\:grid-cols-3.2xl\:grid-cols-5 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stats de 3 colunas no topo de skills / stamina */
+  .grid-cols-3 { grid-template-columns: repeat(3, 1fr) !important; }
+}
+
+@media (max-width: 480px) {
+  /* Dificuldade buttons: 2×2 */
+  .grid-cols-2.sm\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Tabs de weapons */
+  .flex.flex-wrap.gap-1\.5 {
+    gap: 6px !important;
+  }
+
+  /* Stat cards: 2 colunas em vez de 3 */
+  .grid-cols-3 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* Cost cards no skills */
+  .grid-cols-3.gap-3 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ─── Padding e max-width responsivo ─────────────────────── */
+@media (max-width: 640px) {
+  .px-4 { padding-left: 12px !important; padding-right: 12px !important; }
+  .py-10 { padding-top: 24px !important; padding-bottom: 24px !important; }
+  .py-12 { padding-top: 28px !important; padding-bottom: 28px !important; }
+  .mb-8  { margin-bottom: 20px !important; }
+  .gap-5 { gap: 12px !important; }
+  .gap-4 { gap: 10px !important; }
+}
+
+/* ─── Botões fixos (menu + login + ThemeToggle) ───────────── */
+/* Evita sobreposição no mobile */
+@media (max-width: 480px) {
+  .fixed.left-2 { left: 6px !important; }
+  .fixed.right-2 { right: 6px !important; }
+
+  /* ThemeToggle fica menor */
+  .fixed.right-2 button[aria-label="Alternar tema"] {
+    width: 34px !important;
+    height: 34px !important;
+  }
+}
+
+/* ─── Home: service cards ─────────────────────────────────── */
+@media (max-width: 640px) {
+  /* Cards de serviço: texto menor */
+  button.rounded-\[24px\] .text-xl,
+  button.rounded-\[24px\] .text-2xl { font-size: 1rem !important; }
+
+  button.rounded-\[24px\] .text-sm { font-size: 0.7rem !important; }
+}
+
+/* ─── Modal imbuimentos: largura máxima no mobile ─────────── */
+@media (max-width: 640px) {
+  /* Modal full-screen no mobile */
+  .fixed.inset-0.z-50.flex .w-full.overflow-y-auto.rounded-2xl {
+    max-width: 100% !important;
+    max-height: 98vh !important;
+    border-radius: 16px !important;
+    margin: 4px !important;
+  }
+
+  /* Tier cards do modal: 1 col */
+  .grid[style*="gridTemplateColumns: 'repeat(3, 1fr)'"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Price inputs: 2 cols */
+  .grid-cols-4 { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+/* ─── Calculadora XP: inputs no mobile ───────────────────── */
+@media (max-width: 480px) {
+  .grid-cols-2.gap-4 { grid-template-columns: 1fr !important; }
+
+  /* Botões de tab XP/% */
+  .flex.gap-2 button.flex-1 { font-size: 11px !important; padding: 6px !important; }
+}
+
+/* ─── Skills: vocação buttons ────────────────────────────── */
+@media (max-width: 480px) {
+  /* Vocation buttons menores */
+  button[style*="width: 68"][style*="height: 68"] {
+    width: 52px !important;
+    height: 52px !important;
+  }
+}
+
+/* ─── Stamina: tier cards na direita ─────────────────────── */
+@media (max-width: 1024px) {
+  /* Stamina result cards: empilhados */
+  .flex.flex-col.gap-4 .rounded-2xl.p-5 {
+    width: 100% !important;
+  }
+}
+
+/* ─── Loot split: textarea ────────────────────────────────── */
+@media (max-width: 640px) {
+  textarea { font-size: 11px !important; }
+  textarea[rows="20"] { rows: 12 !important; min-height: 200px !important; }
+}
+
+/* ─── Bounty tasks: talisman card ────────────────────────── */
+@media (max-width: 1024px) {
+  /* Talisman calculator: full width abaixo dos slots */
+  .lg\:grid-cols-\[1fr_360px\] > :last-child {
+    width: 100% !important;
+  }
+}
+
+/* ─── Texto "On RubinOT" / labels ────────────────────────── */
+@media (max-width: 480px) {
+  [class*="tracking-\[0"] { letter-spacing: 0.25em !important; }
+}
+
+/* ─── Duration card do skills (dias:horas:min) ───────────── */
+@media (max-width: 480px) {
+  /* Wrap o timer */
+  .flex.items-center.justify-between .flex.items-center.gap-2 {
+    flex-wrap: wrap !important;
+    justify-content: flex-end !important;
+  }
+}
+
+/* ─── Scrollbar global ───────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(167,139,250,0.2); border-radius: 99px; }
+
+/* ─── Prevent tap highlight ──────────────────────────────── */
+button, a { -webkit-tap-highlight-color: transparent; }
