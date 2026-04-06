@@ -59,9 +59,9 @@ const IMBUEMENTS: Imbuement[] = [
   { id: 'slash',          name: 'Slash',          desc: 'Sword Fighting',     tiers: [ T('Basic','+1x Sword fighting',["Lion's Mane",25]), T('Intricate','+2x Sword fighting',["Lion's Mane",25],["Mooh'Tah Shell",25]), T('Powerful','+4x Sword fighting',["Lion's Mane",25],["Mooh'Tah Shell",25],['War Crystal',5]) ] },
   { id: 'precision',      name: 'Precision',      desc: 'Distance Fighting',  tiers: [ T('Basic','+1x Distance fighting',['Elven Scouting Glass',25]), T('Intricate','+2x Distance fighting',['Elven Scouting Glass',25],['Elven Hoof',20]), T('Powerful','+4x Distance fighting',['Elven Scouting Glass',25],['Elven Hoof',20],['Metal Spike',10]) ] },
   { id: 'epiphany',       name: 'Epiphany',       desc: 'Magic Level',        tiers: [ T('Basic','+1x Magic level',['Elvish Talisman',25]), T('Intricate','+2x Magic level',['Elvish Talisman',25],['Broken Shamanic Staff',15]), T('Powerful','+4x Magic level',['Elvish Talisman',25],['Broken Shamanic Staff',15],['Strand of Medusa Hair',15]) ] },
-  { id: 'punch',          name: 'Punch',          desc: 'Fist Fighting',      tiers: [ T('Basic','+1x Fist fighting',['Tarantula Egg',25]), T('Intricate','+2x Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20]), T('Powerful','+4x Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20],['Gold-Brocaded Cloth',15]) ] },
+  { id: 'punch',          name: 'Punch',          desc: 'Fist Fighting',      tiers: [ T('Basic','+1 Fist fighting',['Tarantula Egg',25]), T('Intricate','+2 Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20]), T('Powerful','+4 Fist fighting',['Tarantula Egg',25],['Mantassin Tail',20],['Gold-Brocaded Cloth',15]) ] },
   { id: 'blockade',       name: 'Blockade',       desc: 'Shielding',          tiers: [ T('Basic','+1x Shielding',['Piece of Scarab Shell',20]), T('Intricate','+2x Shielding',['Piece of Scarab Shell',20],['Brimstone Shell',25]), T('Powerful','+4x Shielding',['Piece of Scarab Shell',20],['Brimstone Shell',25],['Frazzle Skin',25]) ] },
-  { id: 'lich-shroud',    name: 'Lich Shroud',    desc: 'Death Protection',   tiers: [ T('Basic','+2% Death protection',['Flask of Embalming Fluid',25]), T('Intricate','+5% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20]), T('Powerful','+10% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20],['Mystical Hourglass',5]) ] },
+  { id: 'lich-shroud',    name: 'Lich Shroud',    desc: 'Death Protection',   tiers: [ T('Basic','+3% Death protection',['Flask of Embalming Fluid',25]), T('Intricate','+8% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20]), T('Powerful','+15% Death protection',['Flask of Embalming Fluid',25],['Gloom Wolf Fur',20],['Mystical Hourglass',5]) ] },
   { id: 'snake-skin',     name: 'Snake Skin',     desc: 'Earth Protection',   tiers: [ T('Basic','+3% Earth protection',['Piece of Swampling Wood',25]), T('Intricate','+8% Earth protection',['Piece of Swampling Wood',25],['Snake Skin',10]), T('Powerful','+15% Earth protection',['Piece of Swampling Wood',25],['Snake Skin',10],['Brimstone Fangs',10]) ] },
   { id: 'dragon-hide',    name: 'Dragon Hide',    desc: 'Fire Protection',    tiers: [ T('Basic','+3% Fire protection',['Green Dragon Leather',20]), T('Intricate','+8% Fire protection',['Green Dragon Leather',20],['Blazing Bone',10]), T('Powerful','+15% Fire protection',['Green Dragon Leather',20],['Blazing Bone',10],['Draken Sulphur',5]) ] },
   { id: 'quara-scale',    name: 'Quara Scale',    desc: 'Ice Protection',     tiers: [ T('Basic','+3% Ice protection',['Winter Wolf Fur',25]), T('Intricate','+8% Ice protection',['Winter Wolf Fur',25],['Thick Fur',15]), T('Powerful','+15% Ice protection',['Winter Wolf Fur',25],['Thick Fur',15],['Deepling Warts',10]) ] },
@@ -278,7 +278,7 @@ export default function ImbuimentosPage() {
               </div>
 
               {/* tier cards — mesma estrutura dos cards do skills */}
-              <div className="grid gap-3 p-5" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className="grid grid-cols-1 gap-3 p-5 sm:grid-cols-2 lg:grid-cols-3">
                 {selected.tiers.map((tier, ti) => {
                   const tierNum = (ti + 1) as 1|2|3;
                   const mc = marketCost(tier);
@@ -339,7 +339,7 @@ export default function ImbuimentosPage() {
                 <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600">
                   Preços dos Recursos
                 </p>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
 
                   {/* Gold Token */}
                   <div className="flex flex-col gap-2 rounded-xl p-3"

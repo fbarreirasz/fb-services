@@ -2399,14 +2399,16 @@ const whatsappRcServiceMessage = encodeURIComponent(
         </div>
       </div>
 
-      <div className="fixed right-2 top-2 z-50 sm:right-3 sm:top-3 md:right-4 md:top-4">
+      <div className="fixed right-2 top-2 z-50 sm:right-3 sm:top-3 md:right-4 md:top-4 flex items-center gap-2">
+        <ThemeToggle />
         <div className="relative">
-          {!isLoggedIn ? (
-            <button
-              type="button"
+          {!isLoggedIn ? ( 
+            <button 
+              type="button" 
               onClick={() => openAuthPage('login')}
               className="group inline-flex items-center gap-2 rounded-full bg-black/35 px-4 py-2.5 text-sm font-semibold text-zinc-100 shadow-[0_12px_34px_rgba(0,0,0,0.22)] backdrop-blur-md transition hover:border-amber-300/30 hover:bg-black/55 hover:text-white hover:shadow-[0_0_16px_rgba(251,191,36,0.18)]"
             >
+              
               <span className="flex h-4 w-4 items-center justify-center text-zinc-200">
                 <User className="h-4 w-4" />
               </span>
@@ -2414,7 +2416,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
               <ChevronDown className="h-4 w-4 text-zinc-300 transition group-hover:text-amber-200" />
             </button>
           ) : (
-            <>  <ThemeToggle />
+      <> 
               <button
                 type="button"
                 onClick={() => setIsUserMenuOpen((prev) => !prev)}
