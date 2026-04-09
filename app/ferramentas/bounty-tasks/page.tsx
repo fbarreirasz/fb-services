@@ -173,7 +173,7 @@ type TalismanType = 'damage' | 'leech' | 'loot' | 'bestiary';
 const TALISMAN_CFG: Record<TalismanType, { min: number; max: number; step: number; label: string }> = {
   damage:   { min: 2.5, max: 50,  step: 0.5, label: 'Dano vs Criaturas' },
   leech:    { min: 2.5, max: 50,  step: 0.5, label: 'Roubo de Vida' },
-  loot:     { min: 2.5, max: 50,  step: 0.5, label: 'Mais Saque' },
+  loot:     { min: 2.5, max: 50,  step: 0.5, label: 'Mais Loot' },
   bestiary: { min: 5,   max: 100, step: 1,   label: 'Bestiário Duplo' },
 };
 
@@ -373,13 +373,13 @@ function TalismanCalculator() {
       <div className="flex items-center gap-2">
         <span style={{ color: PURPLE }}>⚡</span>
         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-          Calculadora de Custo do Talismã
+          Calculadora de Custo 
         </p>
       </div>
 
       {/* Tipo dropdown */}
       <div className="relative">
-        <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-600">Tipo de Talismã</p>
+        <p className="mb-1.5 text-[9px] font-bold uppercase tracking-widest text-zinc-600">Tipo de Buff</p>
         <button onClick={() => setDdOpen(o => !o)}
           className="flex h-10 w-full items-center justify-between rounded-xl px-3 text-sm font-semibold text-white"
           style={{ border: `1px solid ${BORDER}`, background: '#0d0d14' }}>
@@ -464,7 +464,7 @@ function TalismanCalculator() {
       <div className="rounded-xl p-3" style={{ border: `1px solid ${BORDER}`, background: 'rgba(255,255,255,0.02)' }}>
         <p className="mb-2 text-[9px] font-bold uppercase tracking-widest text-zinc-600">Máximo total (2.5→50 ou 5→100)</p>
         <div className="grid grid-cols-2 gap-1 text-[11px] text-zinc-500">
-          <span>Dano / Saque / Leech:</span><span className="font-bold text-zinc-400">53.440 pts</span>
+          <span>Dano / Loot / Leech:</span><span className="font-bold text-zinc-400">53.440 pts</span>
           <span>Bestiário Duplo:</span><span className="font-bold text-zinc-400">53.440 pts</span>
         </div>
       </div>
