@@ -115,9 +115,11 @@ const monthNames = [
 
 const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
-const weekdayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
-const thursdayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
-const fridayHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
+const weekdayMorningHours = ['07:00', '08:00', '09:00'];
+const weekdayAfternoonHours = ['13:00', '14:00', '15:00', '16:00', '17:00'];
+
+const weekdayNightHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
+const fridayNightHours = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const saturdayHours = ['21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
 const sundayHours = ['21:00', '22:00', '23:00'];
 
@@ -159,6 +161,7 @@ const questOptions = [
   'Sweet Dreams Quest',
   'The Order of the Lion Quest',
   'The Roost of the Graveborn Quest',
+  'Feaster of Souls Quest',
 ];
 
 const questTimeWindows = ['Manhã', 'Tarde', 'Noite', 'Madrugada'];
@@ -355,7 +358,31 @@ function isPartial(date: Date, reservedMap: Record<string, string[]> = {}) {
   return reserved.length < available.length;
 }
 
-function getAvailableHoursForDate(dateKey: string | null) {
+
+
+function getMorningHoursForDate(dateKey: string | null) {
+  if (!dateKey) return [];
+
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dow = date.getDay();
+
+  if (dow === 0 || dow === 6) return [];
+  return weekdayMorningHours;
+}
+
+function getAfternoonHoursForDate(dateKey: string | null) {
+  if (!dateKey) return [];
+
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dow = date.getDay();
+
+  if (dow === 0 || dow === 6) return [];
+  return weekdayAfternoonHours;
+}
+
+function getNightHoursForDate(dateKey: string | null) {
   if (!dateKey) return [];
 
   const [year, month, day] = dateKey.split('-').map(Number);
@@ -364,8 +391,18 @@ function getAvailableHoursForDate(dateKey: string | null) {
 
   if (dow === 0) return sundayHours;
   if (dow === 6) return saturdayHours;
-  if (dow === 5) return fridayHours;
-  return weekdayHours;
+  if (dow === 5) return fridayNightHours;
+  return weekdayNightHours;
+}
+
+function getAvailableHoursForDate(dateKey: string | null) {
+  if (!dateKey) return [];
+
+  return [
+    ...getMorningHoursForDate(dateKey),
+    ...getAfternoonHoursForDate(dateKey),
+    ...getNightHoursForDate(dateKey),
+  ];
 }
 
 function getReservedCountForDate(dateKey: string, reservedMap: Record<string, string[]> = {}) {
@@ -447,9 +484,11 @@ function getAttendanceText(activeHoursTab: string | null) {
   const [year, month, day] = activeHoursTab.split('-').map(Number);
   const date = new Date(year, month - 1, day);
 
-  if (isSaturday(date)) return '21:00 às 02:00';
   if (isSunday(date)) return '21:00 às 23:00';
-  return '19:00 às 23:00';
+  if (isSaturday(date)) return '21:00 às 02:00';
+  if (date.getDay() === 5) return '07:00 às 09:00 • 13:00 às 17:00 • 19:00 às 02:00';
+
+  return '07:00 às 09:00 • 13:00 às 17:00 • 19:00 às 00:00';
 }
 
 function getPricingHint(serviceId: string | null) {
@@ -593,17 +632,38 @@ const currentYear = new Date().getFullYear();
 const [rcBlockSize, setRcBlockSize] = useState(DEFAULT_RC_BLOCK_SIZE);
 
 async function loadBlockedSlots() {
-  const { data, error } = await supabase
-    .from('blocked_slots').select('date, hour');
-  if (error) { console.error('Erro ao buscar blocked_slots:', error); return; }
-  if (data) {
-    const map: Record<string, string[]> = {};
-    data.forEach((slot: any) => {
-      if (!map[slot.date]) map[slot.date] = [];
-      map[slot.date].push(slot.hour);
-    });
-    setReservedHoursByDateState(map);
+  const pageSize = 1000;
+  let from = 0;
+  let allRows: { date: string; hour: string }[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('blocked_slots')
+      .select('date, hour')
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      console.error('Erro ao buscar blocked_slots:', error);
+      return;
+    }
+
+    if (!data || data.length === 0) break;
+
+    allRows = [...allRows, ...data];
+
+    if (data.length < pageSize) break;
+
+    from += pageSize;
   }
+
+  const map: Record<string, string[]> = {};
+
+  allRows.forEach((slot) => {
+    if (!map[slot.date]) map[slot.date] = [];
+    map[slot.date].push(slot.hour);
+  });
+
+  setReservedHoursByDateState(map);
 }
 
 async function loadFeedbacks() {
@@ -2274,39 +2334,16 @@ const whatsappRcServiceMessage = encodeURIComponent(
       }}
     >
       {/* Orbs nebulosas animadas */}
-<div className="orb-1 pointer-events-none absolute left-[-10%] top-[8%] z-0 h-[28rem] w-[28rem] rounded-full bg-violet-600/20 blur-[80px]" />
-<div className="orb-2 pointer-events-none absolute right-[-8%] top-[5%] z-0 h-[30rem] w-[30rem] rounded-full bg-fuchsia-500/15 blur-[90px]" />
-<div className="orb-3 pointer-events-none absolute left-[20%] top-[40%] z-0 h-[20rem] w-[20rem] rounded-full bg-blue-600/12 blur-[70px]" />
-<div className="orb-4 pointer-events-none absolute right-[15%] bottom-[10%] z-0 h-[24rem] w-[24rem] rounded-full bg-indigo-500/14 blur-[80px]" />
+<div className="pointer-events-none absolute left-[-10%]" />
+<div className="pointer-events-none absolute right-[-8%]" />
+<div className="pointer-events-none absolute left-[20%]" />
+<div className="pointer-events-none absolute right-[15%]" />
 <div className="pointer-events-none absolute left-1/2 bottom-[-8%] z-0 h-[18rem] w-[40rem] -translate-x-1/2 rounded-full bg-orange-500/10 blur-3xl" />
 
-{/* Aurora horizontal */}
-<div className="aurora-1 pointer-events-none absolute left-0 top-[30%] z-0 h-[2px] w-full bg-gradient-to-r from-transparent via-violet-400/20 to-transparent blur-[6px]" />
-<div className="aurora-2 pointer-events-none absolute left-0 top-[60%] z-0 h-[2px] w-full bg-gradient-to-r from-transparent via-fuchsia-400/15 to-transparent blur-[6px]" />
 
-{/* Estrelas */}
-<div className="pointer-events-none absolute inset-0 z-0">
-  {[
-    { top: '8%',  left: '12%',  size: 'h-[2px] w-[2px]', dur: '2.4s', delay: '0s' },
-    { top: '15%', left: '78%',  size: 'h-[1px] w-[1px]', dur: '3.1s', delay: '0.5s' },
-    { top: '22%', left: '45%',  size: 'h-[2px] w-[2px]', dur: '2.8s', delay: '1.2s' },
-    { top: '35%', left: '88%',  size: 'h-[1px] w-[1px]', dur: '4.0s', delay: '0.3s' },
-    { top: '42%', left: '5%',   size: 'h-[2px] w-[2px]', dur: '3.5s', delay: '0.8s' },
-    { top: '55%', left: '62%',  size: 'h-[1px] w-[1px]', dur: '2.6s', delay: '1.5s' },
-    { top: '65%', left: '30%',  size: 'h-[2px] w-[2px]', dur: '3.8s', delay: '0.2s' },
-    { top: '72%', left: '91%',  size: 'h-[1px] w-[1px]', dur: '2.2s', delay: '1.0s' },
-    { top: '80%', left: '18%',  size: 'h-[2px] w-[2px]', dur: '4.2s', delay: '0.7s' },
-    { top: '88%', left: '55%',  size: 'h-[1px] w-[1px]', dur: '3.0s', delay: '1.8s' },
-    { top: '5%',  left: '55%',  size: 'h-[2px] w-[2px]', dur: '2.9s', delay: '0.4s' },
-    { top: '48%', left: '75%',  size: 'h-[1px] w-[1px]', dur: '3.6s', delay: '1.1s' },
-  ].map((s, i) => (
-    <div
-      key={i}
-      className={`star absolute ${s.size} rounded-full bg-white`}
-      style={{ top: s.top, left: s.left, '--dur': s.dur, animationDelay: s.delay } as React.CSSProperties}
-    />
-  ))}
-</div>
+
+
+
 
 {/* Overlay gradiente geral */}
 <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.04),transparent_22%),linear-gradient(to_bottom,rgba(255,255,255,0.01),transparent_18%,transparent_82%,rgba(0,0,0,0.12))]" />
@@ -2556,34 +2593,25 @@ const whatsappRcServiceMessage = encodeURIComponent(
                 const isQuestService = service.id === 'quests-acessos';
 
                 return (
-                  <motion.div
-                    key={service.id}
-                    initial={{ opacity: 0, y: 18 }}
-                    animate={{
-                      opacity: shouldHide ? 0 : 1,
-                      y: shouldHide ? -10 : 0,
-                      height: shouldHide ? 0 : 'auto',
-                    }}
-                    transition={{
-                      duration: 0.25,
-                      ease: 'easeOut',
-                      delay: shouldHide ? 0 : index * 0.04,
-                    }}
-                    className={
-                      shouldHide ? 'pointer-events-none overflow-hidden' : ''
-                    }
-                  >
-                    <motion.button
-                      whileHover={{ y: -6, scale: active ? 1.015 : 1.01 }}
-                      whileTap={{ scale: 0.995 }}
-                      onClick={() => toggleService(service.id)}
-                      className={`group relative w-full overflow-hidden rounded-[24px] border bg-black/45 px-5 py-4 text-left backdrop-blur-md transition ${
-                        service.border
-                      } ${
-                        active
-                          ? 'border-amber-300/40 shadow-[0_0_0_1px_rgba(251,191,36,0.12),0_0_18px_rgba(251,146,60,0.14),0_10px_26px_rgba(0,0,0,0.24)]'
-                          : 'shadow-[0_8px_22px_rgba(0,0,0,0.18)] hover:shadow-[0_0_12px_rgba(251,191,36,0.08),0_8px_22px_rgba(0,0,0,0.18)]'
-                      }`}
+                  <div
+  key={service.id}
+  style={{
+    overflow: 'hidden',
+    opacity: shouldHide ? 0 : 1,
+    maxHeight: shouldHide ? 0 : '9999px',
+    pointerEvents: shouldHide ? 'none' : 'auto',
+    transition: 'opacity 0.2s ease-out, max-height 0.25s ease-out',
+  }}
+>
+                    <button
+  onClick={() => toggleService(service.id)}
+  className={`group relative w-full overflow-hidden rounded-[24px] border bg-black/45 px-5 py-4 text-left backdrop-blur-md transition hover:-translate-y-1 ${
+    service.border
+  } ${
+    active
+      ? 'border-amber-300/40 shadow-[0_0_0_1px_rgba(251,191,36,0.12),0_0_18px_rgba(251,146,60,0.14),0_10px_26px_rgba(0,0,0,0.24)]'
+      : 'shadow-[0_8px_22px_rgba(0,0,0,0.18)] hover:shadow-[0_0_12px_rgba(251,191,36,0.08),0_8px_22px_rgba(0,0,0,0.18)]'
+  }`}
                     >
                       <div
                         className={`absolute inset-0 bg-gradient-to-r ${
@@ -2592,37 +2620,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                       />
                       <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.05),transparent_26%,transparent)]" />
 
-                      {active && (
-                        <>
-                          <motion.div
-                            initial={{ opacity: 0.45, scale: 0.95 }}
-                            animate={{
-                              opacity: [0.25, 0.5, 0.3],
-                              scale: [0.96, 1.03, 0.98],
-                            }}
-                            transition={{
-                              duration: 1.1,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                            }}
-                            className="absolute -left-6 top-1/2 h-16 w-16 -translate-y-1/2 rounded-full bg-orange-400/12 blur-2xl"
-                          />
-                          <motion.div
-                            initial={{ opacity: 0.35, scale: 0.95 }}
-                            animate={{
-                              opacity: [0.18, 0.4, 0.22],
-                              scale: [0.96, 1.02, 0.98],
-                            }}
-                            transition={{
-                              duration: 1.15,
-                              repeat: Infinity,
-                              ease: 'easeInOut',
-                              delay: 0.12,
-                            }}
-                            className="absolute right-6 top-1/2 h-12 w-12 -translate-y-1/2 rounded-full bg-amber-300/10 blur-xl"
-                          />
-                        </>
-                      )}
+                      
 
                       <div className="relative z-10 flex items-center gap-3">
                         <div
@@ -2664,7 +2662,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                           />
                         </div>
                       </div>
-                    </motion.button>
+                    </button>
 
                     <AnimatePresence>
                       {active &&
@@ -2745,50 +2743,118 @@ const whatsappRcServiceMessage = encodeURIComponent(
                                 )}
 
                                 {activeHoursTab ? (
-                                  <>
-                                    <div className="mt-3 text-[16px] font-black tracking-[-0.02em] text-white md:text-[18px]">
-                                      Horários para{' '}
-                                      {formatDateDisplay(activeHoursTab)}:
-                                    </div>
+  <>
+    <div className="mt-3 text-[16px] font-black tracking-[-0.02em] text-white md:text-[18px]">
+      Horários para {formatDateDisplay(activeHoursTab)}:
+    </div>
 
-                                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-                                      {activeHoursForDate.map((hour) => {
-                                        const selected = (
-                                          selectedHoursByDate[activeHoursTab] ??
-                                          []
-                                        ).includes(hour);
-                                        const reserved =
-                                          activeReservedForDate.includes(hour);
+    {getMorningHoursForDate(activeHoursTab).length > 0 && (
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-bold text-white">Manhã</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          {getMorningHoursForDate(activeHoursTab).map((hour) => {
+            const selected = (selectedHoursByDate[activeHoursTab] ?? []).includes(hour);
+            const reserved = activeReservedForDate.includes(hour);
 
-                                        return (
-                                          <button
-                                            key={`${activeHoursTab}-${hour}`}
-                                            type="button"
-                                            disabled={reserved}
-                                            onClick={() =>
-                                              !reserved &&
-                                              toggleHour(activeHoursTab, hour)
-                                            }
-                                            className={`h-[42px] rounded-[12px] border text-[14px] font-bold transition-all duration-200 ${
-                                              reserved
-                                                ? 'cursor-not-allowed border-slate-800 bg-[#0b1322] text-slate-600'
-                                                : selected
-                                                ? 'border-yellow-400 bg-yellow-400/12 text-yellow-300 shadow-[0_0_12px_rgba(250,204,21,0.14)]'
-                                                : 'border-slate-600/60 bg-[#131d2d]/70 text-slate-200 hover:-translate-y-[1px] hover:border-slate-400 hover:bg-[#18253a]'
-                                            }`}
-                                          >
-                                            {hour}
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="mt-4 rounded-[14px] border border-amber-500/15 bg-amber-500/8 px-4 py-3 text-sm text-amber-200/90">
-                                    Selecione pelo menos uma data no calendário
-                                    para liberar os horários.
-                                  </div>
-                                )}
+            return (
+              <button
+                key={hour}
+                type="button"
+                onClick={() => !reserved && toggleHour(activeHoursTab, hour)}
+                disabled={reserved}
+                className="rounded-[14px] border px-4 py-3 text-sm font-bold transition"
+                style={{
+                  border: selected
+                    ? '1px solid rgba(250,204,21,0.55)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  background: selected
+                    ? 'rgba(250,204,21,0.18)'
+                    : '#0b1220',
+                  color: selected ? '#fde047' : reserved ? '#64748b' : '#ffffff',
+                  opacity: reserved ? 0.55 : 1,
+                }}
+              >
+                {hour}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {getAfternoonHoursForDate(activeHoursTab).length > 0 && (
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-bold text-white">Tarde</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          {getAfternoonHoursForDate(activeHoursTab).map((hour) => {
+            const selected = (selectedHoursByDate[activeHoursTab] ?? []).includes(hour);
+            const reserved = activeReservedForDate.includes(hour);
+
+            return (
+              <button
+                key={hour}
+                type="button"
+                onClick={() => !reserved && toggleHour(activeHoursTab, hour)}
+                disabled={reserved}
+                className="rounded-[14px] border px-4 py-3 text-sm font-bold transition"
+                style={{
+                  border: selected
+                    ? '1px solid rgba(250,204,21,0.55)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  background: selected
+                    ? 'rgba(250,204,21,0.18)'
+                    : '#0b1220',
+                  color: selected ? '#fde047' : reserved ? '#64748b' : '#ffffff',
+                  opacity: reserved ? 0.55 : 1,
+                }}
+              >
+                {hour}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+
+    {getNightHoursForDate(activeHoursTab).length > 0 && (
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-bold text-white">Noite</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+          {getNightHoursForDate(activeHoursTab).map((hour) => {
+            const selected = (selectedHoursByDate[activeHoursTab] ?? []).includes(hour);
+            const reserved = activeReservedForDate.includes(hour);
+
+            return (
+              <button
+                key={hour}
+                type="button"
+                onClick={() => !reserved && toggleHour(activeHoursTab, hour)}
+                disabled={reserved}
+                className="rounded-[14px] border px-4 py-3 text-sm font-bold transition"
+                style={{
+                  border: selected
+                    ? '1px solid rgba(250,204,21,0.55)'
+                    : '1px solid rgba(255,255,255,0.08)',
+                  background: selected
+                    ? 'rgba(250,204,21,0.18)'
+                    : '#0b1220',
+                  color: selected ? '#fde047' : reserved ? '#64748b' : '#ffffff',
+                  opacity: reserved ? 0.55 : 1,
+                }}
+              >
+                {hour}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    )}
+  </>
+) : (
+  <div className="mt-4 rounded-[14px] border border-amber-500/15 bg-amber-500/8 px-4 py-3 text-sm text-amber-200/90">
+    Selecione pelo menos uma data no calendário para liberar os horários.
+  </div>
+)}
 
                                 {hasAnySelectedHour && (
                                   <>
@@ -3566,7 +3632,7 @@ const whatsappRcServiceMessage = encodeURIComponent(
                           </motion.section>
                         )}
                     </AnimatePresence>
-                  </motion.div>
+                  </div>
                 );
               })}
             </div>
@@ -5951,3 +6017,4 @@ para alinhar os dados do service e facilitar a conferência manual.
     </main>
   );
 }
+

@@ -35,6 +35,33 @@ const MONTH_OPTIONS = [
   { value: '11', label: 'Dezembro' },
 ];
 
+const monthNames = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+];
+
+const weekDays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+function formatDateKey(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function getCalendarCells(year: number, month: number) {
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells: Array<Date | null> = [];
+
+  for (let i = 0; i < firstDay; i += 1) cells.push(null);
+  for (let day = 1; day <= daysInMonth; day += 1) cells.push(new Date(year, month, day));
+  while (cells.length % 7 !== 0) cells.push(null);
+
+  return cells;
+}
+
+
 function getStatusClasses(status: string | null) {
   switch (status) {
     case 'approved': return 'border border-sky-400/20 bg-sky-500/15 text-sky-300';
@@ -91,6 +118,21 @@ export default function AdminPage() {
     checkAdmin();
   }, []);
 
+const ALL_ADMIN_HOURS = [
+  '07:00', '08:00', '09:00',
+  '13:00', '14:00', '15:00', '16:00', '17:00',
+  '19:00', '20:00', '21:00', '22:00', '23:00',
+  '00:00', '01:00', '02:00',
+];
+  
+const ADMIN_MORNING_BLOCK = ['07:00', '08:00', '09:00'];
+const ADMIN_AFTERNOON_BLOCK = ['13:00', '14:00', '15:00', '16:00', '17:00'];
+
+const ADMIN_NIGHT_WEEKDAY = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00'];
+const ADMIN_NIGHT_FRIDAY = ['19:00', '20:00', '21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
+const ADMIN_NIGHT_SATURDAY = ['21:00', '22:00', '23:00', '00:00', '01:00', '02:00'];
+const ADMIN_NIGHT_SUNDAY = ['21:00', '22:00', '23:00'];
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
@@ -102,26 +144,124 @@ export default function AdminPage() {
   const [siteSettings, setSiteSettings] = useState({ rc_rate_per_1000: 82, rc_block_size: 25 });
   const [savingSettings, setSavingSettings] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState<{id: string; date: string; hour: string}[]>([]);
-  const [newBlockDate, setNewBlockDate] = useState('');
-  const [newBlockHour, setNewBlockHour] = useState('');
+  const [filterYear, setFilterYear] = useState('all');
+  const [filterMonth, setFilterMonth] = useState('all');
+  const [filterDay, setFilterDay] = useState('all');
+  const [adminMonth, setAdminMonth] = useState(new Date().getMonth());
+const adminYear = new Date().getFullYear();
+
+
+
+const [selectedBlockDates, setSelectedBlockDates] = useState<string[]>([]);
+const [selectedBlockHours, setSelectedBlockHours] = useState<string[]>([]);
+
+const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+const [isHourPickerOpen, setIsHourPickerOpen] = useState(false);
   const [savingSlot, setSavingSlot] = useState(false);
   const [finalizedOrderId, setFinalizedOrderId] = useState<string | null>(null);
   const [finalizedOrder, setFinalizedOrder] = useState<Order | null>(null);
 
+
+  const blockedYears = useMemo(() => Array.from(new Set(blockedSlots.map((slot) => slot.date.split('-')[0]))).sort((a, b) => Number(b) - Number(a)), [blockedSlots]);
+
+  const blockedMonths = useMemo(() => Array.from(new Set(blockedSlots
+    .filter((slot) => filterYear === 'all' ? true : slot.date.split('-')[0] === filterYear)
+    .map((slot) => slot.date.split('-')[1]))).sort((a, b) => Number(a) - Number(b)), [blockedSlots, filterYear]);
+
+  const blockedDays = useMemo(() => Array.from(new Set(blockedSlots
+    .filter((slot) => {
+      const [year, month] = slot.date.split('-');
+      const okYear = filterYear === 'all' ? true : year === filterYear;
+      const okMonth = filterMonth === 'all' ? true : month === filterMonth;
+      return okYear && okMonth;
+    })
+    .map((slot) => slot.date.split('-')[2]))).sort((a, b) => Number(a) - Number(b)), [blockedSlots, filterYear, filterMonth]);
+
+  const filteredBlockedSlots = useMemo(() => blockedSlots.filter((slot) => {
+    const [year, month, day] = slot.date.split('-');
+    const okYear = filterYear === 'all' ? true : year === filterYear;
+    const okMonth = filterMonth === 'all' ? true : month === filterMonth;
+    const okDay = filterDay === 'all' ? true : day === filterDay;
+    return okYear && okMonth && okDay;
+  }), [blockedSlots, filterYear, filterMonth, filterDay]);
+
   async function fetchBlockedSlots() {
-    const { data } = await supabase.from('blocked_slots').select('id, date, hour').order('date').order('hour');
-    if (data) setBlockedSlots(data);
+  const pageSize = 1000;
+  let from = 0;
+  let allRows: { id: string; date: string; hour: string }[] = [];
+
+  while (true) {
+    const { data, error } = await supabase
+      .from('blocked_slots')
+      .select('id, date, hour')
+      .order('date', { ascending: false })
+      .order('hour', { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      console.error('Erro ao buscar blocked_slots:', error);
+      break;
+    }
+
+    if (!data || data.length === 0) break;
+
+    allRows = [...allRows, ...data];
+
+    if (data.length < pageSize) break;
+
+    from += pageSize;
   }
 
-  async function addBlockedSlot() {
-    if (!newBlockDate || !newBlockHour) return;
-    setSavingSlot(true);
-    const { error } = await supabase.from('blocked_slots').insert([{ date: newBlockDate, hour: newBlockHour, reason: 'Bloqueado pelo admin' }]);
-    setSavingSlot(false);
-    if (error) { alert(`Erro: ${error.message}`); return; }
-    setNewBlockDate(''); setNewBlockHour('');
-    fetchBlockedSlots();
+  setBlockedSlots(allRows);
+}
+
+  async function addBlockedSlotsBatch() {
+  if (selectedBlockDates.length === 0 || selectedBlockHours.length === 0) return;
+
+  setSavingSlot(true);
+
+  const rows = selectedBlockDates.flatMap((date) =>
+    selectedBlockHours.map((hour) => ({
+      date,
+      hour,
+      reason: 'Bloqueado pelo admin',
+    }))
+  );
+
+  const { error } = await supabase
+    .from('blocked_slots')
+    .upsert(rows, { onConflict: 'date,hour', ignoreDuplicates: true });
+
+  setSavingSlot(false);
+
+  if (error) {
+    alert(`Erro: ${error.message}`);
+    return;
   }
+
+  setSelectedBlockDates([]);
+  setSelectedBlockHours([]);
+  setIsDatePickerOpen(false);
+  setIsHourPickerOpen(false);
+  fetchBlockedSlots();
+}
+
+function toggleAdminDate(dateKey: string) {
+  setSelectedBlockDates((prev) =>
+    prev.includes(dateKey)
+      ? prev.filter((item) => item !== dateKey)
+      : [...prev, dateKey].sort()
+  );
+}
+
+function toggleAdminHour(hour: string) {
+  setSelectedBlockHours((prev) =>
+    prev.includes(hour)
+      ? prev.filter((item) => item !== hour)
+      : [...prev, hour].sort()
+  );
+}
+
 
   async function removeBlockedSlot(id: string) {
     await supabase.from('blocked_slots').delete().eq('id', id);
@@ -136,6 +276,25 @@ export default function AdminPage() {
     );
     return `https://wa.me/55${phone}?text=${msg}`;
   }
+
+function getAdminHoursForDate(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const dow = date.getDay();
+
+  if (dow === 0) return [...ADMIN_NIGHT_SUNDAY];
+  if (dow === 6) return [...ADMIN_NIGHT_SATURDAY];
+  if (dow === 5) return [...ADMIN_MORNING_BLOCK, ...ADMIN_AFTERNOON_BLOCK, ...ADMIN_NIGHT_FRIDAY];
+
+  return [...ADMIN_MORNING_BLOCK, ...ADMIN_AFTERNOON_BLOCK, ...ADMIN_NIGHT_WEEKDAY];
+}
+
+function getSharedAdminHours(dates: string[]) {
+  if (dates.length === 0) return [] as string[];
+  return ALL_ADMIN_HOURS.filter((hour) =>
+    dates.every((dateKey) => getAdminHoursForDate(dateKey).includes(hour))
+  );
+}
 
   async function fetchOrders() {
     setLoading(true);
@@ -311,7 +470,7 @@ export default function AdminPage() {
             </div>
           </div>
 
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 max-h-[300px] overflow-y-auto pr-2 flex flex-wrap gap-2">
             {(['all', 'pending', 'approved', 'completed', 'rejected'] as StatusFilter[]).map((filter) => {
               const active = statusFilter === filter;
               return (
@@ -349,19 +508,119 @@ export default function AdminPage() {
         <div className="mb-6 rounded-3xl border border-sky-500/20 bg-black/30 p-6">
           <h2 className="text-lg font-bold text-white">Gerenciar Agenda</h2>
           <p className="mt-1 text-sm text-zinc-300">Bloqueie ou libere horários do calendário.</p>
+
           <div className="mt-4 flex flex-wrap gap-3">
-            <input type="date" value={newBlockDate} onChange={(e) => setNewBlockDate(e.target.value)} className="h-11 rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none" />
-            <select value={newBlockHour} onChange={(e) => setNewBlockHour(e.target.value)} className="h-11 rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none">
-              <option value="">Selecione o horário</option>
-              {['19:00','20:00','21:00','22:00','23:00','00:00','01:00','02:00'].map((h) => (<option key={h} value={h}>{h}</option>))}
-            </select>
-            <button onClick={addBlockedSlot} disabled={savingSlot || !newBlockDate || !newBlockHour} className="rounded-2xl bg-sky-500 px-5 py-2 text-sm font-bold text-white transition hover:bg-sky-400 disabled:opacity-50">
-              {savingSlot ? 'Salvando...' : 'Bloquear horário'}
+            <button
+              type="button"
+              onClick={() => setIsDatePickerOpen(true)}
+              className="rounded-2xl border border-white/10 bg-[#0b1220] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#101a2d]"
+            >
+              Selecionar datas
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsHourPickerOpen(true)}
+              disabled={selectedBlockDates.length === 0}
+              className="rounded-2xl border border-white/10 bg-[#0b1220] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#101a2d] disabled:opacity-50"
+            >
+              Selecionar horários
+            </button>
+
+            <button
+              type="button"
+              onClick={addBlockedSlotsBatch}
+              disabled={savingSlot || selectedBlockDates.length === 0 || selectedBlockHours.length === 0}
+              className="rounded-2xl bg-sky-500 px-5 py-3 text-sm font-bold text-white transition hover:bg-sky-400 disabled:opacity-50"
+            >
+              {savingSlot ? 'Salvando...' : 'Bloquear horários'}
             </button>
           </div>
-          {blockedSlots.length > 0 && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {blockedSlots.map((slot) => {
+
+          {selectedBlockDates.length > 0 && (
+            <div className="mt-5">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">
+                Datas selecionadas
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedBlockDates.map((dateKey) => {
+                  const [y, m, d] = dateKey.split('-');
+                  return (
+                    <span
+                      key={dateKey}
+                      className="rounded-full border border-amber-400/20 bg-amber-400/10 px-3 py-1 text-xs font-bold text-amber-200"
+                    >
+                      {d}/{m}/{y}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {selectedBlockHours.length > 0 && (
+            <div className="mt-5">
+              <p className="mb-2 text-xs font-bold uppercase tracking-wider text-zinc-500">
+                Horários selecionados
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedBlockHours.map((hour) => (
+                  <span
+                    key={hour}
+                    className="rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1 text-xs font-bold text-sky-200"
+                  >
+                    {hour}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+<div className="mt-5 grid gap-3 md:grid-cols-3">
+  <select
+    value={filterYear}
+    onChange={(e) => {
+      setFilterYear(e.target.value);
+      setFilterMonth('all');
+      setFilterDay('all');
+    }}
+    className="h-11 rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none"
+  >
+    <option value="all">Todos os anos</option>
+    {blockedYears.map((year) => (
+      <option key={year} value={year}>{year}</option>
+    ))}
+  </select>
+
+  <select
+    value={filterMonth}
+    onChange={(e) => {
+      setFilterMonth(e.target.value);
+      setFilterDay('all');
+    }}
+    className="h-11 rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none"
+  >
+    <option value="all">Todos os meses</option>
+    {blockedMonths.map((month) => (
+      <option key={month} value={month}>{month}</option>
+    ))}
+  </select>
+
+  <select
+    value={filterDay}
+    onChange={(e) => setFilterDay(e.target.value)}
+    className="h-11 rounded-2xl border border-white/10 bg-[#0b1220] px-4 text-sm text-white outline-none"
+  >
+    <option value="all">Todos os dias</option>
+    {blockedDays.map((day) => (
+      <option key={day} value={day}>{day}</option>
+    ))}
+  </select>
+</div>
+
+          {filteredBlockedSlots.length > 0 && (
+            <div className="mt-5 max-h-[320px] overflow-y-auto pr-2 flex flex-wrap gap-2">
+              {filteredBlockedSlots.map((slot) => {
                 const [y, m, d] = slot.date.split('-');
                 return (
                   <div key={slot.id} className="flex items-center gap-2 rounded-full border border-red-400/20 bg-red-500/10 px-3 py-1.5 text-sm text-red-200">
@@ -372,7 +631,130 @@ export default function AdminPage() {
               })}
             </div>
           )}
+
+          {filteredBlockedSlots.length === 0 && blockedSlots.length > 0 && (
+            <div className="mt-5 rounded-2xl border border-white/10 bg-[#0b1220] px-4 py-3 text-sm text-zinc-400">
+              Nenhum horário bloqueado encontrado para o filtro selecionado.
+            </div>
+          )}
         </div>
+
+        {isDatePickerOpen && (
+          <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-3xl rounded-[28px] border border-white/10 bg-[#07101d] p-6 shadow-2xl">
+              <div className="mb-5 flex items-center justify-between">
+                <h4 className="text-xl font-black text-white">Selecionar datas</h4>
+                <button
+                  type="button"
+                  onClick={() => setIsDatePickerOpen(false)}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              <div className="mb-4 flex items-center justify-between">
+                <button
+                  type="button"
+                  onClick={() => setAdminMonth((prev) => (prev === 0 ? 11 : prev - 1))}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white"
+                >
+                  ←
+                </button>
+
+                <div className="text-center text-2xl font-black text-white">
+                  {monthNames[adminMonth]} de {adminYear}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setAdminMonth((prev) => (prev === 11 ? 0 : prev + 1))}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-white"
+                >
+                  →
+                </button>
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {weekDays.map((day) => (
+                  <div key={day} className="pb-2 text-center text-xs font-bold uppercase tracking-wider text-zinc-500">
+                    {day}
+                  </div>
+                ))}
+
+                {getCalendarCells(adminYear, adminMonth).map((date, index) => {
+                  if (!date) return <div key={`empty-${index}`} />;
+
+                  const dateKey = formatDateKey(date);
+                  const selected = selectedBlockDates.includes(dateKey);
+
+                  return (
+                    <button
+                      key={dateKey}
+                      type="button"
+                      onClick={() => toggleAdminDate(dateKey)}
+                      className="rounded-2xl border py-4 text-center font-bold transition"
+                      style={{
+                        border: selected ? '1px solid rgba(250,204,21,0.45)' : '1px solid rgba(255,255,255,0.08)',
+                        background: selected ? 'rgba(250,204,21,0.18)' : '#0b1220',
+                        color: selected ? '#fde047' : '#ffffff',
+                      }}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isHourPickerOpen && (
+          <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-3xl rounded-[28px] border border-white/10 bg-[#07101d] p-6 shadow-2xl">
+              <div className="mb-5 flex items-center justify-between">
+                <h4 className="text-xl font-black text-white">Selecionar horários</h4>
+                <button
+                  type="button"
+                  onClick={() => setIsHourPickerOpen(false)}
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-white"
+                >
+                  Fechar
+                </button>
+              </div>
+
+              <p className="mb-4 text-sm text-zinc-400">
+                Os horários apagados não podem ser usados em todas as datas selecionadas.
+              </p>
+
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5">
+                {ALL_ADMIN_HOURS.map((hour) => {
+                  const allowed = getSharedAdminHours(selectedBlockDates).includes(hour);
+                  const selected = selectedBlockHours.includes(hour);
+
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      onClick={() => allowed && toggleAdminHour(hour)}
+                      disabled={!allowed}
+                      className="rounded-xl border px-3 py-2 text-sm font-bold transition"
+                      style={{
+                        border: selected ? '1px solid rgba(56,189,248,0.55)' : '1px solid rgba(255,255,255,0.08)',
+                        background: selected ? 'rgba(56,189,248,0.18)' : '#0f172a',
+                        color: selected ? '#7dd3fc' : allowed ? '#ffffff' : '#64748b',
+                        opacity: allowed ? 1 : 0.35,
+                        cursor: allowed ? 'pointer' : 'not-allowed',
+                      }}
+                    >
+                      {hour}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {filteredOrders.length === 0 ? (
           <div className="rounded-3xl border border-yellow-500/20 bg-yellow-500/10 p-6 text-yellow-200">

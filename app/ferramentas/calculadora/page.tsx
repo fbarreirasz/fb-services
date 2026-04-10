@@ -85,7 +85,7 @@ export default function CalculadoraPage() {
   const [levelFrom, setLevelFrom] = useState(958);
   const [levelTo,   setLevelTo]   = useState(1000);
   const [mode,      setMode]      = useState<'xp' | 'pct'>('xp');
-  const [xpExact,   setXpExact]   = useState(3239355);
+  const [xpExact,   setXpExact]   = useState(0);
   const [pct,       setPct]       = useState(8);
   const [rawKK,     setRawKK]     = useState(1);
   const [hSess,     setHSess]     = useState(2);
